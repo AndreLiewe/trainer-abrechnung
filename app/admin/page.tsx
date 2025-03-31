@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -8,28 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 type Abrechnung = {
-    id: string;
-    datum: string;
-    sparte: string;
-    beginn: string;
-    ende: string;
-    hallenfeld: string;
-    funktion: string;
-    aufbau: boolean;
-    status?: string; // optional, falls manchmal leer
-  };
-  
+  id: string;
+  datum: string;
+  sparte: string;
+  beginn: string;
+  ende: string;
+  hallenfeld: string;
+  funktion: string;
+  aufbau: boolean;
+  status?: string;
+};
+
 export default function AdminDashboard() {
   const [entries, setEntries] = useState<Abrechnung[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("");
 
-  useEffect(() => {
-    fetchData();
-  }, [filterMonat, filterSparte, fetchData]);
-  
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     let query = supabase.from("abrechnungen").select("*");
     if (filterMonat) {
       query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-31`);
@@ -39,7 +34,11 @@ export default function AdminDashboard() {
     }
     const { data, error } = await query;
     if (!error) setEntries(data);
-  };
+  }, [filterMonat, filterSparte]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     await supabase.from("abrechnungen").update({ status: newStatus }).eq("id", id);
