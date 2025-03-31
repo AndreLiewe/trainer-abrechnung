@@ -22,14 +22,14 @@ type Abrechnung = {
 export default function AdminDashboard() {
   const [entries, setEntries] = useState<Abrechnung[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
-  const [filterSparte, setFilterSparte] = useState("");
+  const [filterSparte, setFilterSparte] = useState("alle");
 
   const fetchData = useCallback(async () => {
     let query = supabase.from("abrechnungen").select("*");
     if (filterMonat) {
       query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-31`);
     }
-    if (filterSparte) {
+    if (filterSparte && filterSparte !== "alle") {
       query = query.eq("sparte", filterSparte);
     }
     const { data, error } = await query;
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
               <SelectValue placeholder="Alle Sparten" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Alle</SelectItem>
+              <SelectItem value="alle">Alle</SelectItem>
               <SelectItem value="Judo">Judo</SelectItem>
               <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
               <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
