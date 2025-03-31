@@ -25,16 +25,28 @@ export default function AdminDashboard() {
   const [filterSparte, setFilterSparte] = useState("alle");
 
   const fetchData = useCallback(async () => {
+    console.log("Filter Monat:", filterMonat);
+    console.log("Filter Sparte:", filterSparte);
+  
     let query = supabase.from("abrechnungen").select("*");
+  
     if (filterMonat) {
       query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-31`);
     }
+  
     if (filterSparte && filterSparte !== "alle") {
       query = query.eq("sparte", filterSparte);
     }
+  
     const { data, error } = await query;
-    if (!error) setEntries(data);
+    if (error) {
+      console.error("Supabase-Fehler:", error);
+    } else {
+      console.log("Gefundene Einträge:", data);
+      setEntries(data);
+    }
   }, [filterMonat, filterSparte]);
+  
 
   useEffect(() => {
     fetchData();
