@@ -18,9 +18,10 @@ export default function TrainerAbrechnung() {
     funktion: "trainer",
   });
 
-  const handleChange = (key, value) => {
+  const handleChange = (key: string, value: string) => {
     setFormData({ ...formData, [key]: value });
   };
+  
 
   return (
     <div className="p-6 grid gap-6 max-w-2xl mx-auto">
