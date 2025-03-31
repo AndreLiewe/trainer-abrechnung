@@ -7,14 +7,27 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+type Abrechnung = {
+    id: string;
+    datum: string;
+    sparte: string;
+    beginn: string;
+    ende: string;
+    hallenfeld: string;
+    funktion: string;
+    aufbau: boolean;
+    status?: string; // optional, falls manchmal leer
+  };
+  
 export default function AdminDashboard() {
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<Abrechnung[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("");
 
   useEffect(() => {
     fetchData();
-  }, [filterMonat, filterSparte]);
+  }, [filterMonat, filterSparte, fetchData]);
+  
 
   const fetchData = async () => {
     let query = supabase.from("abrechnungen").select("*");
