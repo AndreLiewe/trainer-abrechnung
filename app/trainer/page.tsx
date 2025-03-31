@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
 
 export default function TrainerAbrechnung() {
   const [formData, setFormData] = useState({
@@ -20,6 +22,37 @@ export default function TrainerAbrechnung() {
 
   const handleChange = (key: string, value: string) => {
     setFormData({ ...formData, [key]: value });
+  };
+  const handleSubmit = async () => {
+    const { datum, sparte, beginn, ende, hallenfeld, aufbau, funktion } = formData;
+  
+    const { error } = await supabase.from("abrechnungen").insert([
+      {
+        datum,
+        sparte,
+        beginn,
+        ende,
+        hallenfeld,
+        aufbau: aufbau === "ja",
+        funktion,
+      },
+    ]);
+  
+    if (error) {
+      alert("Fehler beim Speichern 😢");
+      console.error(error);
+    } else {
+      alert("Abrechnung gespeichert ✅");
+      setFormData({
+        datum: "",
+        sparte: "",
+        beginn: "",
+        ende: "",
+        hallenfeld: "1",
+        aufbau: "nein",
+        funktion: "trainer",
+      });
+    }
   };
   
 
@@ -96,7 +129,10 @@ export default function TrainerAbrechnung() {
               </Select>
             </div>
           </div>
-          <Button className="mt-4 w-full">Abrechnung einreichen</Button>
+          <Button className="mt-4 w-full" onClick={handleSubmit}>
+  Abrechnung einreichen
+</Button>
+
         </CardContent>
       </Card>
     </div>
