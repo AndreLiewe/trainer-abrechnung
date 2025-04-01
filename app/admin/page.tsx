@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
-// Typ für Einträge
 type Abrechnung = {
   id: string;
   datum: string;
@@ -20,11 +19,11 @@ type Abrechnung = {
   funktion: string;
   aufbau: boolean;
   trainername: string;
-  status?: string;
 };
 
 export default function AdminPage() {
   const [entries, setEntries] = useState<Abrechnung[]>([]);
+  const [trainerList, setTrainerList] = useState<string[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("");
@@ -58,6 +57,17 @@ export default function AdminPage() {
     checkUser();
   }, []);
 
+  useEffect(() => {
+    const loadTrainer = async () => {
+      const { data } = await supabase.from("trainer_profiles").select("name");
+      if (data) {
+        const namen = data.map((t) => t.name).filter((n) => !!n);
+        setTrainerList(namen);
+      }
+    };
+    loadTrainer();
+  }, []);
+
   const fetchData = useCallback(async () => {
     let query = supabase.from("abrechnungen").select("*");
     if (filterMonat) {
@@ -77,12 +87,9 @@ export default function AdminPage() {
     if (isAdmin) fetchData();
   }, [fetchData, isAdmin]);
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    await supabase.from("abrechnungen").update({ status: newStatus }).eq("id", id);
-    fetchData();
-  };
-
   const handleDelete = async (id: string) => {
+    const confirmed = confirm("Wirklich löschen?");
+    if (!confirmed) return;
     await supabase.from("abrechnungen").delete().eq("id", id);
     fetchData();
   };
@@ -107,7 +114,6 @@ export default function AdminPage() {
         funktion,
         aufbau: aufbau === "ja",
         trainername,
-        status: "Eingereicht"
       },
     ]);
     setNewEntry({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
@@ -143,7 +149,15 @@ export default function AdminPage() {
         </div>
         <div>
           <Label>Trainer</Label>
-          <Input placeholder="Trainername" value={filterTrainer} onChange={(e) => setFilterTrainer(e.target.value)} />
+          <Select value={filterTrainer} onValueChange={setFilterTrainer}>
+            <SelectTrigger><SelectValue placeholder="Alle Trainer" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Alle</SelectItem>
+              {trainerList.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -160,7 +174,6 @@ export default function AdminPage() {
                 <th>Funktion</th>
                 <th>Aufbau</th>
                 <th>Trainer</th>
-                <th>Status</th>
                 <th>Aktion</th>
               </tr>
             </thead>
@@ -176,19 +189,6 @@ export default function AdminPage() {
                   <td>{e.aufbau ? "Ja" : "Nein"}</td>
                   <td>{e.trainername}</td>
                   <td>
-                    <Select value={e.status ?? "Eingereicht"} onValueChange={(val) => handleStatusChange(e.id, val)}>
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Status wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Eingereicht">Eingereicht</SelectItem>
-                        <SelectItem value="In Prüfung">In Prüfung</SelectItem>
-                        <SelectItem value="Überwiesen">Überwiesen</SelectItem>
-                        <SelectItem value="Rückstellung">Rückstellung</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
                   </td>
                 </tr>
@@ -202,10 +202,27 @@ export default function AdminPage() {
         <h2 className="text-lg font-bold mb-2">Neuen Eintrag hinzufügen</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <Input type="date" placeholder="Datum" value={newEntry.datum} onChange={(e) => handleNewChange("datum", e.target.value)} />
-          <Input placeholder="Sparte" value={newEntry.sparte} onChange={(e) => handleNewChange("sparte", e.target.value)} />
+          <Select value={newEntry.sparte} onValueChange={(val) => handleNewChange("sparte", val)}>
+            <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Judo">Judo</SelectItem>
+              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+            </SelectContent>
+          </Select>
           <Input type="time" placeholder="Beginn" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
           <Input type="time" placeholder="Ende" value={newEntry.ende} onChange={(e) => handleNewChange("ende", e.target.value)} />
-          <Input placeholder="Feld" value={newEntry.hallenfeld} onChange={(e) => handleNewChange("hallenfeld", e.target.value)} />
+          <Select value={newEntry.hallenfeld} onValueChange={(val) => handleNewChange("hallenfeld", val)}>
+            <SelectTrigger><SelectValue placeholder="Feld" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Feld 1</SelectItem>
+              <SelectItem value="2">Feld 2</SelectItem>
+              <SelectItem value="3">Feld 3</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={newEntry.funktion} onValueChange={(val) => handleNewChange("funktion", val)}>
             <SelectTrigger><SelectValue placeholder="Funktion" /></SelectTrigger>
             <SelectContent>
@@ -220,7 +237,14 @@ export default function AdminPage() {
               <SelectItem value="nein">Nein</SelectItem>
             </SelectContent>
           </Select>
-          <Input placeholder="Trainername" value={newEntry.trainername} onChange={(e) => handleNewChange("trainername", e.target.value)} />
+          <Select value={newEntry.trainername} onValueChange={(val) => handleNewChange("trainername", val)}>
+            <SelectTrigger><SelectValue placeholder="Trainer" /></SelectTrigger>
+            <SelectContent>
+              {trainerList.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
       </div>
