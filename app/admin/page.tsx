@@ -70,14 +70,13 @@ export default function AdminPage() {
 
   const fetchData = useCallback(async () => {
     let query = supabase.from("abrechnungen").select("*");
-   if (filterMonat) {
-  const [jahr, monat] = filterMonat.split("-");
-  const lastDay = new Date(Number(jahr), Number(monat), 0).getDate(); // letzter Tag im Monat
-  query = query
-    .gte("datum", `${filterMonat}-01`)
-    .lte("datum", `${filterMonat}-${lastDay}`);
-}
-
+    if (filterMonat) {
+      const [jahr, monat] = filterMonat.split("-");
+      const lastDay = new Date(Number(jahr), Number(monat), 0).getDate();
+      query = query
+        .gte("datum", `${filterMonat}-01`)
+        .lte("datum", `${filterMonat}-${lastDay}`);
+    }
     if (filterSparte !== "alle") {
       query = query.eq("sparte", filterSparte);
     }
@@ -123,6 +122,15 @@ export default function AdminPage() {
     ]);
     setNewEntry({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
     fetchData();
+  };
+
+  const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string): number => {
+    const [hStart, mStart] = beginn.split(":").map(Number);
+    const [hEnd, mEnd] = ende.split(":").map(Number);
+    let stunden = hEnd + mEnd / 60 - (hStart + mStart / 60);
+    if (aufbau) stunden += 0.5;
+    const satz = funktion === "trainer" ? 20 : 10;
+    return +(stunden * satz).toFixed(2);
   };
 
   if (!isAdmin) {
@@ -179,6 +187,7 @@ export default function AdminPage() {
                 <th>Funktion</th>
                 <th>Aufbau</th>
                 <th>Trainer</th>
+                <th>Vergütung (€)</th>
                 <th>Aktion</th>
               </tr>
             </thead>
@@ -193,6 +202,7 @@ export default function AdminPage() {
                   <td>{e.funktion}</td>
                   <td>{e.aufbau ? "Ja" : "Nein"}</td>
                   <td>{e.trainername}</td>
+                  <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
                   <td>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
                   </td>
@@ -203,61 +213,9 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-6">
-        <h2 className="text-lg font-bold mb-2">Neuen Eintrag hinzufügen</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <Input type="date" placeholder="Datum" value={newEntry.datum} onChange={(e) => handleNewChange("datum", e.target.value)} />
-          <Select value={newEntry.sparte} onValueChange={(val) => handleNewChange("sparte", val)}>
-            <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Judo">Judo</SelectItem>
-              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input type="time" placeholder="Beginn" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
-          <Input type="time" placeholder="Ende" value={newEntry.ende} onChange={(e) => handleNewChange("ende", e.target.value)} />
-          <Select value={newEntry.hallenfeld} onValueChange={(val) => handleNewChange("hallenfeld", val)}>
-            <SelectTrigger><SelectValue placeholder="Feld" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Feld 1</SelectItem>
-              <SelectItem value="2">Feld 2</SelectItem>
-              <SelectItem value="3">Feld 3</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={newEntry.funktion} onValueChange={(val) => handleNewChange("funktion", val)}>
-            <SelectTrigger><SelectValue placeholder="Funktion" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="trainer">Trainer</SelectItem>
-              <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={newEntry.aufbau} onValueChange={(val) => handleNewChange("aufbau", val)}>
-            <SelectTrigger><SelectValue placeholder="Aufbau" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ja">Ja</SelectItem>
-              <SelectItem value="nein">Nein</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={newEntry.trainername} onValueChange={(val) => handleNewChange("trainername", val)}>
-            <SelectTrigger><SelectValue placeholder="Trainer" /></SelectTrigger>
-            <SelectContent>
-              {trainerList.map((name) => (
-                <SelectItem key={name} value={name}>{name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
-      </div>
-
       <div className="mt-8 text-center">
         <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
       </div>
     </div>
   );
 }
-
