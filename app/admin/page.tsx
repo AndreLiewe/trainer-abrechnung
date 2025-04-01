@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
+// Typ für Einträge
 type Abrechnung = {
   id: string;
   datum: string;
@@ -27,16 +28,6 @@ export default function AdminPage() {
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("alle");
-  const [newEntry, setNewEntry] = useState({
-    datum: "",
-    sparte: "",
-    beginn: "",
-    ende: "",
-    hallenfeld: "1",
-    funktion: "trainer",
-    aufbau: "nein",
-    trainername: ""
-  });
   const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
@@ -97,29 +88,19 @@ export default function AdminPage() {
     await supabase.from("abrechnungen").delete().eq("id", id);
     fetchData();
   };
-    await supabase.from("abrechnungen").insert([
-      {
-        datum,
-        sparte,
-        beginn,
-        ende,
-        hallenfeld,
-        funktion,
-        aufbau: aufbau === "ja",
-        trainername,
-      },
-    ]);
-    setNewEntry({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
-    fetchData();
-  };
 
-  const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string): number => {
-    const [hStart, mStart] = beginn.split(":").map(Number);
-    const [hEnd, mEnd] = ende.split(":").map(Number);
-    let stunden = hEnd + mEnd / 60 - (hStart + mStart / 60);
-    if (aufbau) stunden += 0.5;
-    const satz = funktion === "trainer" ? 20 : 10;
-    return +(stunden * satz).toFixed(2);
+  const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string) => {
+    const [hBeginn, mBeginn] = beginn.split(":").map(Number);
+    const [hEnde, mEnde] = ende.split(":").map(Number);
+    const beginnMin = hBeginn * 60 + mBeginn;
+    const endeMin = hEnde * 60 + mEnde;
+    let dauer = (endeMin - beginnMin) / 60;
+    if (dauer < 0) dauer += 24; // bei Zeit über Mitternacht
+
+    let stundenlohn = funktion === "hilfstrainer" ? 6 : 12;
+    let betrag = dauer * stundenlohn;
+    if (aufbau) betrag += 5;
+    return betrag.toFixed(2);
   };
 
   if (!isAdmin) {
