@@ -125,16 +125,17 @@ export default function AdminPage() {
   };
 
   const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string) => {
-    const [hBeginn, mBeginn] = beginn.split(":" ).map(Number);
-    const [hEnde, mEnde] = ende.split(":" ).map(Number);
+    const [hBeginn, mBeginn] = beginn.split(":").map(Number);
+    const [hEnde, mEnde] = ende.split(":").map(Number);
     const beginnMin = hBeginn * 60 + mBeginn;
     let endeMin = hEnde * 60 + mEnde;
     if (endeMin < beginnMin) endeMin += 24 * 60;
-    const dauer = (endeMin - beginnMin) / 60;
 
-    const stundenlohn = funktion === "hilfstrainer" ? 6 : 12;
-    let betrag = dauer * stundenlohn;
-    if (aufbau) betrag += 5;
+    let dauer = (endeMin - beginnMin) / 60;
+    if (aufbau) dauer += 0.5;
+
+    const stundenlohn = funktion === "hilfstrainer" ? 10 : 20;
+    const betrag = dauer * stundenlohn;
     return betrag.toFixed(2);
   };
 
