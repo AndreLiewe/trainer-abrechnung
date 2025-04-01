@@ -26,7 +26,14 @@ export default function TrainerAbrechnung() {
   const handleSubmit = async () => {
     const { datum, sparte, beginn, ende, hallenfeld, aufbau, funktion } = formData;
 
-    if (!datum || !sparte || !beginn || !ende || !hallenfeld || !funktion) {
+    if (
+      !datum.trim() ||
+      !sparte.trim() ||
+      !beginn.trim() ||
+      !ende.trim() ||
+      !hallenfeld.trim() ||
+      !funktion.trim()
+    ) {
       alert("Bitte fülle alle Pflichtfelder aus.");
       return;
     }
@@ -140,3 +147,4 @@ export default function TrainerAbrechnung() {
     </div>
   );
 }
+
