@@ -18,7 +18,7 @@ export default function LoginPage() {
     if (error) {
       setError("Login fehlgeschlagen. Bitte überprüfe deine Daten.");
     } else {
-      router.push("/trainer");
+      router.push("/start");
     }
   };
 
