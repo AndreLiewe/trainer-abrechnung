@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import RequireAuth from "@/components/RequireAuth";
 
+// Typ für Einträge
 type Abrechnung = {
   id: string;
   datum: string;
@@ -119,39 +119,37 @@ export default function AdminPage() {
   }
 
   return (
-    <RequireAuth>
-      <div className="p-6 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
-        <div className="flex gap-4 mb-6 flex-wrap">
-          <div>
-            <Label>Monat</Label>
-            <Input type="month" value={filterMonat} onChange={(e) => setFilterMonat(e.target.value)} />
-          </div>
-          <div>
-            <Label>Sparte</Label>
-            <Select value={filterSparte} onValueChange={setFilterSparte}>
-              <SelectTrigger><SelectValue placeholder="Alle Sparten" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Alle</SelectItem>
-                <SelectItem value="Judo">Judo</SelectItem>
-                <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-                <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-                <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-                <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-                <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Trainer</Label>
-            <Input placeholder="Trainername" value={filterTrainer} onChange={(e) => setFilterTrainer(e.target.value)} />
-          </div>
+    <div className="p-6 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
+      <div className="flex gap-4 mb-6 flex-wrap">
+        <div>
+          <Label>Monat</Label>
+          <Input type="month" value={filterMonat} onChange={(e) => setFilterMonat(e.target.value)} />
         </div>
-
-        <!-- ... restlicher Code bleibt gleich ... -->
-
+        <div>
+          <Label>Sparte</Label>
+          <Select value={filterSparte} onValueChange={setFilterSparte}>
+            <SelectTrigger><SelectValue placeholder="Alle Sparten" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Alle</SelectItem>
+              <SelectItem value="Judo">Judo</SelectItem>
+              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Trainer</Label>
+          <Input placeholder="Trainername" value={filterTrainer} onChange={(e) => setFilterTrainer(e.target.value)} />
+        </div>
       </div>
-    </RequireAuth>
+
+      <!-- restlicher JSX bleibt unverändert, hier folgt die Tabelle und das Formular -->
+
+    </div>
   );
 }
 
