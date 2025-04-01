@@ -22,6 +22,7 @@ export default function TrainerAbrechnung() {
   });
   const [userEmail, setUserEmail] = useState("");
   const [trainerName, setTrainerName] = useState("");
+  const [loadingUser, setLoadingUser] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,20 +32,18 @@ export default function TrainerAbrechnung() {
       } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || "");
-
-        // Lade den Namen aus trainer_profiles
         const { data, error } = await supabase
           .from("trainer_profiles")
           .select("name")
           .eq("email", user.email)
           .single();
-
         if (!error && data) {
           setTrainerName(data.name);
         } else {
           console.warn("Kein Trainername gefunden für", user.email);
         }
       }
+      setLoadingUser(false);
     };
     getUser();
   }, []);
@@ -62,9 +61,10 @@ export default function TrainerAbrechnung() {
       !beginn.trim() ||
       !ende.trim() ||
       !hallenfeld.trim() ||
-      !funktion.trim()
+      !funktion.trim() ||
+      !trainerName.trim()
     ) {
-      alert("Bitte fülle alle Pflichtfelder aus.");
+      alert("Bitte fülle alle Pflichtfelder aus oder lade die Seite neu.");
       return;
     }
 
@@ -105,92 +105,97 @@ export default function TrainerAbrechnung() {
 
   return (
     <RequireAuth>
-      <div className="p-6 grid gap-6 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Trainer-Abrechnung</h1>
-          <div className="text-right text-sm">
-            <p className="text-gray-600">{userEmail}</p>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
-        </div>
-
-        <Card>
-          <CardContent className="space-y-4 p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Datum</Label>
-                <Input type="date" value={formData.datum} onChange={(e) => handleChange("datum", e.target.value)} />
-              </div>
-              <div>
-                <Label>Sparte</Label>
-                <Select value={formData.sparte} onValueChange={(val) => handleChange("sparte", val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sparte wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Judo">Judo</SelectItem>
-                    <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-                    <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-                    <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-                    <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-                    <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Beginn</Label>
-                <Input type="time" value={formData.beginn} onChange={(e) => handleChange("beginn", e.target.value)} />
-              </div>
-              <div>
-                <Label>Ende</Label>
-                <Input type="time" value={formData.ende} onChange={(e) => handleChange("ende", e.target.value)} />
-              </div>
-              <div>
-                <Label>Hallenfeld</Label>
-                <Select value={formData.hallenfeld} onValueChange={(val) => handleChange("hallenfeld", val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wähle Feld" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Feld 1</SelectItem>
-                    <SelectItem value="2">Feld 2</SelectItem>
-                    <SelectItem value="3">Feld 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Funktion</Label>
-                <Select value={formData.funktion} onValueChange={(val) => handleChange("funktion", val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Funktion wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="trainer">Trainer</SelectItem>
-                    <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Aufbau geleistet?</Label>
-                <Select value={formData.aufbau} onValueChange={(val) => handleChange("aufbau", val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Aufbau?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ja">Ja</SelectItem>
-                    <SelectItem value="nein">Nein</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      {loadingUser ? (
+        <div className="p-6 text-center text-gray-500">Lade Nutzerdaten…</div>
+      ) : (
+        <div className="p-6 grid gap-6 max-w-2xl mx-auto">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Trainer-Abrechnung</h1>
+            <div className="text-right text-sm">
+              <p className="text-gray-600">{userEmail}</p>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
             </div>
-            <Button className="mt-4 w-full" onClick={handleSubmit}>
-              Abrechnung einreichen
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          <Card>
+            <CardContent className="space-y-4 p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Datum</Label>
+                  <Input type="date" value={formData.datum} onChange={(e) => handleChange("datum", e.target.value)} />
+                </div>
+                <div>
+                  <Label>Sparte</Label>
+                  <Select value={formData.sparte} onValueChange={(val) => handleChange("sparte", val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sparte wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Judo">Judo</SelectItem>
+                      <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+                      <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+                      <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+                      <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+                      <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Beginn</Label>
+                  <Input type="time" value={formData.beginn} onChange={(e) => handleChange("beginn", e.target.value)} />
+                </div>
+                <div>
+                  <Label>Ende</Label>
+                  <Input type="time" value={formData.ende} onChange={(e) => handleChange("ende", e.target.value)} />
+                </div>
+                <div>
+                  <Label>Hallenfeld</Label>
+                  <Select value={formData.hallenfeld} onValueChange={(val) => handleChange("hallenfeld", val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wähle Feld" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Feld 1</SelectItem>
+                      <SelectItem value="2">Feld 2</SelectItem>
+                      <SelectItem value="3">Feld 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Funktion</Label>
+                  <Select value={formData.funktion} onValueChange={(val) => handleChange("funktion", val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Funktion wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="trainer">Trainer</SelectItem>
+                      <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Aufbau geleistet?</Label>
+                  <Select value={formData.aufbau} onValueChange={(val) => handleChange("aufbau", val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Aufbau?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ja">Ja</SelectItem>
+                      <SelectItem value="nein">Nein</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button className="mt-4 w-full" onClick={handleSubmit}>
+                Abrechnung einreichen
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </RequireAuth>
   );
 }
+
