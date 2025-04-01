@@ -21,6 +21,7 @@ export default function TrainerAbrechnung() {
     funktion: "trainer",
   });
   const [userEmail, setUserEmail] = useState("");
+  const [trainerName, setTrainerName] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +31,19 @@ export default function TrainerAbrechnung() {
       } = await supabase.auth.getUser();
       if (user) {
         setUserEmail(user.email || "");
+
+        // Lade den Namen aus trainer_profiles
+        const { data, error } = await supabase
+          .from("trainer_profiles")
+          .select("name")
+          .eq("email", user.email)
+          .single();
+
+        if (!error && data) {
+          setTrainerName(data.name);
+        } else {
+          console.warn("Kein Trainername gefunden für", user.email);
+        }
       }
     };
     getUser();
@@ -63,7 +77,7 @@ export default function TrainerAbrechnung() {
         hallenfeld,
         aufbau: aufbau === "ja",
         funktion,
-        user_email: userEmail,
+        trainername: trainerName,
       },
     ]);
 
@@ -180,4 +194,3 @@ export default function TrainerAbrechnung() {
     </RequireAuth>
   );
 }
-
