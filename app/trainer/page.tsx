@@ -30,13 +30,19 @@ export default function TrainerAbrechnung() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      
       if (user) {
         setUserEmail(user.email || "");
+              console.log("Eingeloggte E-Mail:", user.email);
+
         const { data, error } = await supabase
           .from("trainer_profiles")
           .select("name")
           .eq("email", user.email)
           .single();
+      console.log("Datenbankantwort trainer_profiles:", data);
+      console.log("Fehler bei trainer_profiles:", error);
+        
         if (!error && data) {
           setTrainerName(data.name);
         } else {
