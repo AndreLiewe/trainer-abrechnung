@@ -9,8 +9,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Label } from "@/components/ui/label";
 import RequireAuth from "@/components/RequireAuth";
 import { useRouter } from "next/navigation";
-import { BackToStartButton } from "../start/page";
-
 
 export default function TrainerAbrechnung() {
   const [formData, setFormData] = useState({
@@ -32,23 +30,15 @@ export default function TrainerAbrechnung() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      
       if (user) {
         setUserEmail(user.email || "");
-              console.log("Eingeloggte E-Mail:", user.email);
-
         const { data, error } = await supabase
           .from("trainer_profiles")
           .select("name")
           .eq("email", user.email)
-          .maybeSingle();
-      console.log("Datenbankantwort trainer_profiles:", data);
-      console.log("Fehler bei trainer_profiles:", error);
-        
+          .single();
         if (!error && data) {
           setTrainerName(data.name);
-        } else {
-          console.warn("Kein Trainername gefunden für", user.email);
         }
       }
       setLoadingUser(false);
@@ -199,7 +189,7 @@ export default function TrainerAbrechnung() {
               <Button className="mt-4 w-full" onClick={handleSubmit}>
                 Abrechnung einreichen
               </Button>
-              <BackToStartButton />
+              <Button variant="ghost" className="mt-2 w-full" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
             </CardContent>
           </Card>
         </div>
@@ -207,4 +197,3 @@ export default function TrainerAbrechnung() {
     </RequireAuth>
   );
 }
-
