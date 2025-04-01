@@ -97,7 +97,7 @@ export default function AdminPage() {
     let dauer = (endeMin - beginnMin) / 60;
     if (dauer < 0) dauer += 24; // bei Zeit über Mitternacht
 
-    let stundenlohn = funktion === "hilfstrainer" ? 6 : 12;
+    const stundenlohn = funktion === "hilfstrainer" ? 6 : 12;
     let betrag = dauer * stundenlohn;
     if (aufbau) betrag += 5;
     return betrag.toFixed(2);
