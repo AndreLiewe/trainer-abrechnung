@@ -70,9 +70,14 @@ export default function AdminPage() {
 
   const fetchData = useCallback(async () => {
     let query = supabase.from("abrechnungen").select("*");
-    if (filterMonat) {
-      query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-31`);
-    }
+   if (filterMonat) {
+  const [jahr, monat] = filterMonat.split("-");
+  const lastDay = new Date(Number(jahr), Number(monat), 0).getDate(); // letzter Tag im Monat
+  query = query
+    .gte("datum", `${filterMonat}-01`)
+    .lte("datum", `${filterMonat}-${lastDay}`);
+}
+
     if (filterSparte !== "alle") {
       query = query.eq("sparte", filterSparte);
     }
