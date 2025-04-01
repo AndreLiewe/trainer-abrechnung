@@ -36,6 +36,11 @@ export default function StartSeite() {
     checkUser();
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Lade Benutzerinformationen…</div>;
   }
@@ -53,6 +58,7 @@ export default function StartSeite() {
               🧑‍💼 Admin-Dashboard
             </Button>
           )}
+          <Button onClick={handleLogout} variant="outline">🚪 Logout</Button>
         </div>
       </div>
     </RequireAuth>
