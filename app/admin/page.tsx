@@ -97,17 +97,6 @@ export default function AdminPage() {
     await supabase.from("abrechnungen").delete().eq("id", id);
     fetchData();
   };
-
-  const handleNewChange = (key: string, value: string) => {
-    setNewEntry({ ...newEntry, [key]: value });
-  };
-
-  const handleNewSubmit = async () => {
-    const { datum, sparte, beginn, ende, hallenfeld, funktion, aufbau, trainername } = newEntry;
-    if (!datum || !sparte || !beginn || !ende || !hallenfeld || !funktion || !trainername) {
-      alert("Bitte alle Felder ausfüllen");
-      return;
-    }
     await supabase.from("abrechnungen").insert([
       {
         datum,
