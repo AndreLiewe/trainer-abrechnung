@@ -26,7 +26,7 @@ export default function AdminPage() {
   const [trainerList, setTrainerList] = useState<string[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("alle");
-  const [filterTrainer, setFilterTrainer] = useState("");
+  const [filterTrainer, setFilterTrainer] = useState("alle");
   const [newEntry, setNewEntry] = useState({
     datum: "",
     sparte: "",
@@ -76,7 +76,7 @@ export default function AdminPage() {
     if (filterSparte !== "alle") {
       query = query.eq("sparte", filterSparte);
     }
-    if (filterTrainer) {
+    if (filterTrainer && filterTrainer !== "alle") {
       query = query.eq("trainername", filterTrainer);
     }
     const { data } = await query;
@@ -152,7 +152,7 @@ export default function AdminPage() {
           <Select value={filterTrainer} onValueChange={setFilterTrainer}>
             <SelectTrigger><SelectValue placeholder="Alle Trainer" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Alle</SelectItem>
+              <SelectItem value="alle">Alle</SelectItem>
               {trainerList.map((name) => (
                 <SelectItem key={name} value={name}>{name}</SelectItem>
               ))}
