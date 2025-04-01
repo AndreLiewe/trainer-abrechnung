@@ -34,11 +34,14 @@ export default function AdminDashboard() {
   const start = `${filterMonat}-01`;
   const endDate = new Date(filterMonat + "-01");
   endDate.setMonth(endDate.getMonth() + 1);
-  endDate.setDate(0); // letzter Tag des Monats
-  const end = endDate.toISOString().split("T")[0];
+  endDate.setDate(0);
+  endDate.setHours(23, 59, 59, 999); // << wichtig
+
+  const end = endDate.toISOString(); // inklusive Uhrzeit!
 
   query = query.gte("datum", start).lte("datum", end);
 }
+
 
   
     if (filterSparte && filterSparte !== "alle") {
