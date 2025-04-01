@@ -137,7 +137,83 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <!-- Rest bleibt unverändert -->
+        <Card>
+          <CardContent className="overflow-x-auto p-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b">
+                  <th>Datum</th>
+                  <th>Sparte</th>
+                  <th>Beginn</th>
+                  <th>Ende</th>
+                  <th>Feld</th>
+                  <th>Funktion</th>
+                  <th>Aufbau</th>
+                  <th>Trainer</th>
+                  <th>Status</th>
+                  <th>Aktion</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={e.id} className="border-b hover:bg-gray-50">
+                    <td>{e.datum}</td>
+                    <td>{e.sparte}</td>
+                    <td>{e.beginn}</td>
+                    <td>{e.ende}</td>
+                    <td>{e.hallenfeld}</td>
+                    <td>{e.funktion}</td>
+                    <td>{e.aufbau ? "Ja" : "Nein"}</td>
+                    <td>{e.trainername}</td>
+                    <td>
+                      <Select value={e.status || "Eingereicht"} onValueChange={(val) => handleStatusChange(e.id, val)}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Status wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Eingereicht">Eingereicht</SelectItem>
+                          <SelectItem value="In Prüfung">In Prüfung</SelectItem>
+                          <SelectItem value="Überwiesen">Überwiesen</SelectItem>
+                          <SelectItem value="Rückstellung">Rückstellung</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        <div className="mt-6">
+          <h2 className="text-lg font-bold mb-2">Neuen Eintrag hinzufügen</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <Input type="date" placeholder="Datum" value={newEntry.datum} onChange={(e) => handleNewChange("datum", e.target.value)} />
+            <Input placeholder="Sparte" value={newEntry.sparte} onChange={(e) => handleNewChange("sparte", e.target.value)} />
+            <Input type="time" placeholder="Beginn" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
+            <Input type="time" placeholder="Ende" value={newEntry.ende} onChange={(e) => handleNewChange("ende", e.target.value)} />
+            <Input placeholder="Feld" value={newEntry.hallenfeld} onChange={(e) => handleNewChange("hallenfeld", e.target.value)} />
+            <Select value={newEntry.funktion} onValueChange={(val) => handleNewChange("funktion", val)}>
+              <SelectTrigger><SelectValue placeholder="Funktion" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="trainer">Trainer</SelectItem>
+                <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={newEntry.aufbau} onValueChange={(val) => handleNewChange("aufbau", val)}>
+              <SelectTrigger><SelectValue placeholder="Aufbau" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ja">Ja</SelectItem>
+                <SelectItem value="nein">Nein</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input placeholder="Trainername" value={newEntry.trainername} onChange={(e) => handleNewChange("trainername", e.target.value)} />
+          </div>
+          <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
+        </div>
 
         <div className="mt-8 text-center">
           <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
