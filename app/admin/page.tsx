@@ -31,8 +31,15 @@ export default function AdminDashboard() {
     let query = supabase.from("abrechnungen").select("*");
   
     if (filterMonat) {
-      query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-31`);
-    }
+  const start = `${filterMonat}-01`;
+  const endDate = new Date(filterMonat + "-01");
+  endDate.setMonth(endDate.getMonth() + 1);
+  endDate.setDate(0); // letzter Tag des Monats
+  const end = endDate.toISOString().split("T")[0];
+
+  query = query.gte("datum", start).lte("datum", end);
+}
+
   
     if (filterSparte && filterSparte !== "alle") {
       query = query.eq("sparte", filterSparte);
