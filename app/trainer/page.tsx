@@ -39,7 +39,7 @@ export default function TrainerAbrechnung() {
           .from("trainer_profiles")
           .select("name")
           .eq("email", user.email)
-          .single();
+          .maybeSingle();
       console.log("Datenbankantwort trainer_profiles:", data);
       console.log("Fehler bei trainer_profiles:", error);
         
