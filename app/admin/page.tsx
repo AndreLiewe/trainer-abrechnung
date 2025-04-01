@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
-// Typ für Einträge
 type Abrechnung = {
   id: string;
   datum: string;
@@ -29,6 +28,16 @@ export default function AdminPage() {
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("alle");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [newEntry, setNewEntry] = useState({
+    datum: "",
+    sparte: "",
+    beginn: "",
+    ende: "",
+    hallenfeld: "1",
+    funktion: "trainer",
+    aufbau: "nein",
+    trainername: ""
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -89,13 +98,39 @@ export default function AdminPage() {
     fetchData();
   };
 
+  const handleNewChange = (key: string, value: string) => {
+    setNewEntry({ ...newEntry, [key]: value });
+  };
+
+  const handleNewSubmit = async () => {
+    const { datum, sparte, beginn, ende, hallenfeld, funktion, aufbau, trainername } = newEntry;
+    if (!datum || !sparte || !beginn || !ende || !hallenfeld || !funktion || !trainername) {
+      alert("Bitte alle Felder ausfüllen");
+      return;
+    }
+    await supabase.from("abrechnungen").insert([
+      {
+        datum,
+        sparte,
+        beginn,
+        ende,
+        hallenfeld,
+        funktion,
+        aufbau: aufbau === "ja",
+        trainername,
+      },
+    ]);
+    setNewEntry({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
+    fetchData();
+  };
+
   const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string) => {
-    const [hBeginn, mBeginn] = beginn.split(":").map(Number);
-    const [hEnde, mEnde] = ende.split(":").map(Number);
-    const beginnMin = hBeginn * 60 + mBeginn;
-    const endeMin = hEnde * 60 + mEnde;
-    let dauer = (endeMin - beginnMin) / 60;
-    if (dauer < 0) dauer += 24; // bei Zeit über Mitternacht
+    const [hBeginn, mBeginn] = beginn.split(":" ).map(Number);
+    const [hEnde, mEnde] = ende.split(":" ).map(Number);
+    let beginnMin = hBeginn * 60 + mBeginn;
+    let endeMin = hEnde * 60 + mEnde;
+    if (endeMin < beginnMin) endeMin += 24 * 60;
+    const dauer = (endeMin - beginnMin) / 60;
 
     const stundenlohn = funktion === "hilfstrainer" ? 6 : 12;
     let betrag = dauer * stundenlohn;
@@ -110,6 +145,7 @@ export default function AdminPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
+
       <div className="flex gap-4 mb-6 flex-wrap">
         <div>
           <Label>Monat</Label>
@@ -182,6 +218,57 @@ export default function AdminPage() {
           </table>
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <h2 className="text-lg font-bold mb-2">Neuen Eintrag hinzufügen</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <Input type="date" placeholder="Datum" value={newEntry.datum} onChange={(e) => handleNewChange("datum", e.target.value)} />
+          <Select value={newEntry.sparte} onValueChange={(val) => handleNewChange("sparte", val)}>
+            <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Judo">Judo</SelectItem>
+              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input type="time" placeholder="Beginn" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
+          <Input type="time" placeholder="Ende" value={newEntry.ende} onChange={(e) => handleNewChange("ende", e.target.value)} />
+          <Select value={newEntry.hallenfeld} onValueChange={(val) => handleNewChange("hallenfeld", val)}>
+            <SelectTrigger><SelectValue placeholder="Feld" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Feld 1</SelectItem>
+              <SelectItem value="2">Feld 2</SelectItem>
+              <SelectItem value="3">Feld 3</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={newEntry.funktion} onValueChange={(val) => handleNewChange("funktion", val)}>
+            <SelectTrigger><SelectValue placeholder="Funktion" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="trainer">Trainer</SelectItem>
+              <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={newEntry.aufbau} onValueChange={(val) => handleNewChange("aufbau", val)}>
+            <SelectTrigger><SelectValue placeholder="Aufbau" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ja">Ja</SelectItem>
+              <SelectItem value="nein">Nein</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={newEntry.trainername} onValueChange={(val) => handleNewChange("trainername", val)}>
+            <SelectTrigger><SelectValue placeholder="Trainer" /></SelectTrigger>
+            <SelectContent>
+              {trainerList.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
+      </div>
 
       <div className="mt-8 text-center">
         <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
