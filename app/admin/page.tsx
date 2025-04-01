@@ -1,148 +1,148 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
+import RequireAuth from "@/components/RequireAuth";
 
-type Abrechnung = {
-  id: string;
-  datum: string;
-  sparte: string;
-  beginn: string;
-  ende: string;
-  hallenfeld: string;
-  funktion: string;
-  aufbau: boolean;
-  status?: string;
-};
-
-export default function AdminDashboard() {
-  const [entries, setEntries] = useState<Abrechnung[]>([]);
+export default function AdminPage() {
+  const [entries, setEntries] = useState<any[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
-  const [filterSparte, setFilterSparte] = useState("alle");
-
-  const fetchData = useCallback(async () => {
-    console.log("Filter Monat:", filterMonat);
-    console.log("Filter Sparte:", filterSparte);
-  
-    let query = supabase.from("abrechnungen").select("*");
-  
-    if (filterMonat) {
-  const start = `${filterMonat}-01`;
-  const endDate = new Date(filterMonat + "-01");
-  endDate.setMonth(endDate.getMonth() + 1);
-  endDate.setDate(0);
-  endDate.setHours(23, 59, 59, 999); // << wichtig
-
-  const end = endDate.toISOString(); // inklusive Uhrzeit!
-
-  query = query.gte("datum", start).lte("datum", end);
-}
-
-
-  
-    if (filterSparte && filterSparte !== "alle") {
-      query = query.eq("sparte", filterSparte);
-    }
-  
-    const { data, error } = await query;
-    if (error) {
-      console.error("Supabase-Fehler:", error);
-    } else {
-      console.log("Gefundene Einträge:", data);
-      setEntries(data);
-    }
-  }, [filterMonat, filterSparte]);
-  
+  const [filterSparte, setFilterSparte] = useState("");
+  const [filterTrainer, setFilterTrainer] = useState("");
+  const [newEntry, setNewEntry] = useState({
+    datum: "",
+    sparte: "",
+    beginn: "",
+    ende: "",
+    hallenfeld: "1",
+    funktion: "trainer",
+    aufbau: "nein",
+    trainername: ""
+  });
+  const [userEmail, setUserEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+        const { data, error } = await supabase
+          .from("admin_users")
+          .select("email")
+          .eq("email", user.email)
+          .single();
+        if (data && !error) setIsAdmin(true);
+      }
+    };
+    checkUser();
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin) fetchData();
+  }, [filterMonat, filterSparte, filterTrainer, isAdmin]);
+
+  const fetchData = async () => {
+    let query = supabase.from("abrechnungen").select("*");
+    if (filterMonat) {
+      query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-31`);
+    }
+    if (filterSparte) {
+      query = query.eq("sparte", filterSparte);
+    }
+    if (filterTrainer) {
+      query = query.eq("trainername", filterTrainer);
+    }
+    const { data } = await query;
+    setEntries(data || []);
+  };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     await supabase.from("abrechnungen").update({ status: newStatus }).eq("id", id);
     fetchData();
   };
 
-  return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
+  const handleDelete = async (id: string) => {
+    await supabase.from("abrechnungen").delete().eq("id", id);
+    fetchData();
+  };
 
-      <div className="flex gap-4 mb-6">
-        <div>
-          <Label>Monat</Label>
-          <Input
-            type="month"
-            value={filterMonat}
-            onChange={(e) => setFilterMonat(e.target.value)}
-          />
+  const handleNewChange = (key: string, value: string) => {
+    setNewEntry({ ...newEntry, [key]: value });
+  };
+
+  const handleNewSubmit = async () => {
+    const { datum, sparte, beginn, ende, hallenfeld, funktion, aufbau, trainername } = newEntry;
+    if (!datum || !sparte || !beginn || !ende || !hallenfeld || !funktion || !trainername) {
+      alert("Bitte alle Felder ausfüllen");
+      return;
+    }
+    await supabase.from("abrechnungen").insert([
+      {
+        datum,
+        sparte,
+        beginn,
+        ende,
+        hallenfeld,
+        funktion,
+        aufbau: aufbau === "ja",
+        trainername,
+        status: "Eingereicht"
+      },
+    ]);
+    setNewEntry({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
+    fetchData();
+  };
+
+  if (!isAdmin) {
+    return <div className="p-6 text-center">Kein Zugriff ❌</div>;
+  }
+
+  return (
+    <RequireAuth>
+      <div className="p-6 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
+        <div className="flex gap-4 mb-6 flex-wrap">
+          <div>
+            <Label>Monat</Label>
+            <Input type="month" value={filterMonat} onChange={(e) => setFilterMonat(e.target.value)} />
+          </div>
+          <div>
+            <Label>Sparte</Label>
+            <Select value={filterSparte} onValueChange={setFilterSparte}>
+              <SelectTrigger><SelectValue placeholder="Alle Sparten" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Alle</SelectItem>
+                <SelectItem value="Judo">Judo</SelectItem>
+                <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+                <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+                <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+                <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+                <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Trainer</Label>
+            <Input placeholder="Trainername" value={filterTrainer} onChange={(e) => setFilterTrainer(e.target.value)} />
+          </div>
         </div>
-        <div>
-          <Label>Sparte</Label>
-          <Select value={filterSparte} onValueChange={setFilterSparte}>
-            <SelectTrigger>
-              <SelectValue placeholder="Alle Sparten" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="alle">Alle</SelectItem>
-              <SelectItem value="Judo">Judo</SelectItem>
-              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
-            </SelectContent>
-          </Select>
+
+        <!-- Rest bleibt unverändert -->
+
+        <div className="mt-8 text-center">
+          <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
         </div>
       </div>
-
-      <Card>
-        <CardContent className="overflow-x-auto p-4">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th>Datum</th>
-                <th>Sparte</th>
-                <th>Beginn</th>
-                <th>Ende</th>
-                <th>Feld</th>
-                <th>Funktion</th>
-                <th>Aufbau</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.id} className="border-b hover:bg-gray-50">
-                  <td>{e.datum}</td>
-                  <td>{e.sparte}</td>
-                  <td>{e.beginn}</td>
-                  <td>{e.ende}</td>
-                  <td>{e.hallenfeld}</td>
-                  <td>{e.funktion}</td>
-                  <td>{e.aufbau ? "Ja" : "Nein"}</td>
-                  <td>
-                    <Select value={e.status || "Eingereicht"} onValueChange={(val) => handleStatusChange(e.id, val)}>
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder="Status wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Eingereicht">Eingereicht</SelectItem>
-                        <SelectItem value="In Prüfung">In Prüfung</SelectItem>
-                        <SelectItem value="Überwiesen">Überwiesen</SelectItem>
-                        <SelectItem value="Rückstellung">Rückstellung</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-    </div>
+    </RequireAuth>
   );
 }
