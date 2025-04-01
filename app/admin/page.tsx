@@ -147,8 +147,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <!-- restlicher JSX bleibt unverändert, hier folgt die Tabelle und das Formular -->
-
     </div>
   );
 }
