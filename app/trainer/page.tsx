@@ -1,13 +1,12 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function TrainerAbrechnung() {
   const [formData, setFormData] = useState({
@@ -23,9 +22,15 @@ export default function TrainerAbrechnung() {
   const handleChange = (key: string, value: string) => {
     setFormData({ ...formData, [key]: value });
   };
+
   const handleSubmit = async () => {
     const { datum, sparte, beginn, ende, hallenfeld, aufbau, funktion } = formData;
-  
+
+    if (!datum || !sparte || !beginn || !ende || !hallenfeld || !funktion) {
+      alert("Bitte fülle alle Pflichtfelder aus.");
+      return;
+    }
+
     const { error } = await supabase.from("abrechnungen").insert([
       {
         datum,
@@ -37,7 +42,7 @@ export default function TrainerAbrechnung() {
         funktion,
       },
     ]);
-  
+
     if (error) {
       alert("Fehler beim Speichern 😢");
       console.error(error);
@@ -54,7 +59,6 @@ export default function TrainerAbrechnung() {
       });
     }
   };
-  
 
   return (
     <div className="p-6 grid gap-6 max-w-2xl mx-auto">
@@ -67,22 +71,21 @@ export default function TrainerAbrechnung() {
               <Input type="date" value={formData.datum} onChange={(e) => handleChange("datum", e.target.value)} />
             </div>
             <div>
-  <Label>Sparte</Label>
-  <Select value={formData.sparte} onValueChange={(val) => handleChange("sparte", val)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Sparte wählen" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="Judo">Judo</SelectItem>
-      <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-      <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-      <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-      <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-      <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-
+              <Label>Sparte</Label>
+              <Select value={formData.sparte} onValueChange={(val) => handleChange("sparte", val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sparte wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Judo">Judo</SelectItem>
+                  <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+                  <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+                  <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+                  <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+                  <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Beginn</Label>
               <Input type="time" value={formData.beginn} onChange={(e) => handleChange("beginn", e.target.value)} />
@@ -130,9 +133,8 @@ export default function TrainerAbrechnung() {
             </div>
           </div>
           <Button className="mt-4 w-full" onClick={handleSubmit}>
-  Abrechnung einreichen
-</Button>
-
+            Abrechnung einreichen
+          </Button>
         </CardContent>
       </Card>
     </div>
