@@ -9,6 +9,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Label } from "@/components/ui/label";
 import RequireAuth from "@/components/RequireAuth";
 import { useRouter } from "next/navigation";
+import { BackToStartButton } from "../start/page";
+
 
 export default function TrainerAbrechnung() {
   const [formData, setFormData] = useState({
@@ -197,6 +199,7 @@ export default function TrainerAbrechnung() {
               <Button className="mt-4 w-full" onClick={handleSubmit}>
                 Abrechnung einreichen
               </Button>
+              <BackToStartButton />
             </CardContent>
           </Card>
         </div>
