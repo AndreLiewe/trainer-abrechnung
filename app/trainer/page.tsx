@@ -249,7 +249,7 @@ export default function TrainerAbrechnung() {
               </div>
 
               <Button className="mt-4 w-full" onClick={handleSubmit}>
-                Abrechnung einreichen
+                Eintrag einreichen
               </Button>
               <Button variant="ghost" className="mt-2 w-full" onClick={() => router.push("/start")}>
                 🔙 Zur Startseite
