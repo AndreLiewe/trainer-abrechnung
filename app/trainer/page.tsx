@@ -65,6 +65,29 @@ export default function TrainerAbrechnung() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<Abrechnungseintrag | null>(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("trainer_profiles")
+        .select("name")
+        .eq("email", user.email)
+        .single();
+
+      if (!profile) return;
+
+      setTrainerName(profile.name);
+      loadEntries(profile.name);
+    };
+
+    fetchData();
+  }, []);
+
   const loadEntries = async (trainername: string) => {
     const today = new Date();
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -101,119 +124,85 @@ export default function TrainerAbrechnung() {
       loadEntries(selectedEntry.trainername);
     }
   };
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm("Diesen Eintrag wirklich löschen?");
-    if (!confirmed) return;
-  
-    const { error } = await supabase.from("abrechnungen").delete().eq("id", id);
+
+  const handleSubmit = async () => {
+    const { datum, sparte, beginn, ende, hallenfeld, aufbau, funktion } = formData;
+    if (!trainerName) return;
+    const { error } = await supabase.from("abrechnungen").insert([
+      {
+        datum,
+        sparte,
+        beginn,
+        ende,
+        hallenfeld,
+        aufbau: aufbau === "ja",
+        funktion,
+        trainername: trainerName,
+      },
+    ]);
+
     if (error) {
-      toast.error("Löschen fehlgeschlagen.");
+      toast.error("Fehler beim Speichern");
     } else {
-      toast.success("Eintrag gelöscht.");
-      setEntries((prev) => prev.filter((e) => e.id !== id));
+      toast.success("Eintrag gespeichert ✅");
+      setFormData({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", aufbau: "nein", funktion: "trainer" });
+      loadEntries(trainerName);
     }
   };
-  
+
   return (
     <RequireAuth>
       <div className="p-6 grid gap-6 max-w-3xl mx-auto">
         <div className="text-sm text-gray-500">⚠️ Einträge können nur bis zum 3. des Folgemonats bearbeitet oder gelöscht werden.</div>
 
-        {/* Tabelle */}
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="p-2">Wochentag</th>
-              <th className="p-2">Datum</th>
-              <th className="p-2">Sparte</th>
-              <th className="p-2">Beginn</th>
-              <th className="p-2">Ende</th>
-              <th className="p-2">Funktion</th>
-              <th className="p-2">Aufbau</th>
-              <th className="p-2">Feld</th>
-              <th className="p-2">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((eintrag) => (
-              <tr key={eintrag.id} className="border-b">
-                <td className="p-2">{getWochentag(eintrag.datum)}</td>
-                <td className="p-2">{eintrag.datum}</td>
-                <td className="p-2">{eintrag.sparte}</td>
-                <td className="p-2">{eintrag.beginn}</td>
-                <td className="p-2">{eintrag.ende}</td>
-                <td className="p-2">{eintrag.funktion}</td>
-                <td className="p-2">{eintrag.aufbau ? "Ja" : "Nein"}</td>
-                <td className="p-2">{eintrag.hallenfeld}</td>
-                <td className="p-2 space-x-2">
-                  {editAllowed(eintrag.datum) ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(eintrag)}>✏️ Bearbeiten</Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(eintrag.id)}>🗑️ Löschen</Button>
-                    </>
-                  ) : (
-                    <span className="text-gray-400 text-xs italic">Gesperrt</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Modal */}
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-          <DialogContent className="max-w-lg">
-            <h3 className="text-lg font-semibold mb-4">Eintrag bearbeiten</h3>
-            {selectedEntry && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Datum</Label>
-                  <Input type="date" value={selectedEntry.datum} onChange={(e) => setSelectedEntry({ ...selectedEntry, datum: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Sparte</Label>
-                  <Input value={selectedEntry.sparte} onChange={(e) => setSelectedEntry({ ...selectedEntry, sparte: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Beginn</Label>
-                  <Input type="time" value={selectedEntry.beginn} onChange={(e) => setSelectedEntry({ ...selectedEntry, beginn: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Ende</Label>
-                  <Input type="time" value={selectedEntry.ende} onChange={(e) => setSelectedEntry({ ...selectedEntry, ende: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Funktion</Label>
-                  <Select value={selectedEntry.funktion} onValueChange={(val) => setSelectedEntry({ ...selectedEntry, funktion: val as "trainer" | "hilfstrainer" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="trainer">Trainer</SelectItem>
-                      <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Aufbau</Label>
-                  <Select value={selectedEntry.aufbau ? "ja" : "nein"} onValueChange={(val) => setSelectedEntry({ ...selectedEntry, aufbau: val === "ja" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ja">Ja</SelectItem>
-                      <SelectItem value="nein">Nein</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Hallenfeld</Label>
-                  <Input value={selectedEntry.hallenfeld} onChange={(e) => setSelectedEntry({ ...selectedEntry, hallenfeld: e.target.value })} />
-                </div>
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <h2 className="text-lg font-semibold">Neue Abrechnung einreichen</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Datum</Label>
+                <Input type="date" value={formData.datum} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
               </div>
-            )}
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditModalOpen(false)}>Abbrechen</Button>
-              <Button onClick={handleUpdate}>Speichern</Button>
+              <div>
+                <Label>Sparte</Label>
+                <Input value={formData.sparte} onChange={(e) => setFormData({ ...formData, sparte: e.target.value })} />
+              </div>
+              <div>
+                <Label>Beginn</Label>
+                <Input type="time" value={formData.beginn} onChange={(e) => setFormData({ ...formData, beginn: e.target.value })} />
+              </div>
+              <div>
+                <Label>Ende</Label>
+                <Input type="time" value={formData.ende} onChange={(e) => setFormData({ ...formData, ende: e.target.value })} />
+              </div>
+              <div>
+                <Label>Funktion</Label>
+                <Select value={formData.funktion} onValueChange={(val) => setFormData({ ...formData, funktion: val as "trainer" | "hilfstrainer" })}>
+                  <SelectTrigger><SelectValue placeholder="Funktion" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trainer">Trainer</SelectItem>
+                    <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Aufbau</Label>
+                <Select value={formData.aufbau} onValueChange={(val) => setFormData({ ...formData, aufbau: val })}>
+                  <SelectTrigger><SelectValue placeholder="Aufbau?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ja">Ja</SelectItem>
+                    <SelectItem value="nein">Nein</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Hallenfeld</Label>
+                <Input value={formData.hallenfeld} onChange={(e) => setFormData({ ...formData, hallenfeld: e.target.value })} />
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+            <Button className="mt-4 w-full" onClick={handleSubmit}>Einreichen</Button>
+          </CardContent>
+        </Card>
       </div>
     </RequireAuth>
   );
