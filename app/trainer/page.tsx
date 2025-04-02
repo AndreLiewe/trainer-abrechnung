@@ -157,7 +157,7 @@ export default function TrainerAbrechnung() {
     try {
       const date = parseISO(datum);
       return format(date, "EEEE", { locale: de }); // z. B. "Montag"
-    } catch (e) {
+    } catch  {
       return "-";
     }
   };
