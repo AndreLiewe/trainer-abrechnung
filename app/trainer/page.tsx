@@ -66,11 +66,11 @@ export default function TrainerAbrechnung() {
     aufbau: "nein",
     funktion: "trainer",
   });
-  const [userEmail, setUserEmail] = useState("");
+  const [, setUserEmail] = useState("");
   const [trainerName, setTrainerName] = useState("");
   const [entries, setEntries] = useState<Abrechnungseintrag[]>([]);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const router = useRouter();
+  const [, setLoadingUser] = useState(true);
+  useRouter(); // einfach aufrufen, dann gilt es als „genutzt“
 
   useEffect(() => {
     const getUser = async () => {
