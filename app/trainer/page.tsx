@@ -10,6 +10,18 @@ import { Label } from "@/components/ui/label";
 import RequireAuth from "@/components/RequireAuth";
 import { useRouter } from "next/navigation";
 
+type Abrechnungseintrag = {
+  id: string;
+  datum: string;
+  sparte: string;
+  beginn: string;
+  ende: string;
+  hallenfeld: string;
+  aufbau: boolean;
+  funktion: "trainer" | "hilfstrainer";
+  trainername: string;
+};
+
 export default function TrainerAbrechnung() {
   const [formData, setFormData] = useState({
     datum: "",
@@ -23,7 +35,7 @@ export default function TrainerAbrechnung() {
 
   const [userEmail, setUserEmail] = useState("");
   const [trainerName, setTrainerName] = useState("");
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<Abrechnungseintrag[]>([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const router = useRouter();
 
