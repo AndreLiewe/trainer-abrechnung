@@ -52,7 +52,10 @@ export default function StartSeite() {
 
         <div className="grid gap-4">
           <Button onClick={() => router.push("/trainer")}>📝 Abrechnung einreichen</Button>
-          <Button onClick={() => router.push("/meine-abrechnungen")}>📄 Meine Abrechnungen</Button>
+          <Button onClick={() => router.push("/trainer/abrechnungen")}>
+  📄 Meine Abrechnungen
+</Button>
+
           {isAdmin && (
             <Button onClick={() => router.push("/admin")} variant="secondary">
               🧑‍💼 Admin-Dashboard
