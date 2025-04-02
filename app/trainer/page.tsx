@@ -9,6 +9,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Label } from "@/components/ui/label";
 import RequireAuth from "@/components/RequireAuth";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
+import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
 
 type Abrechnungseintrag = {
   id: string;
@@ -38,6 +41,7 @@ export default function TrainerAbrechnung() {
   const [entries, setEntries] = useState<Abrechnungseintrag[]>([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     const getUser = async () => {
@@ -96,7 +100,11 @@ export default function TrainerAbrechnung() {
       !funktion.trim() ||
       !trainerName.trim()
     ) {
-      alert("Bitte fülle alle Pflichtfelder aus oder lade die Seite neu.");
+      toast({
+        variant: "destructive",
+        title: "Fehler",
+        description: "Bitte fülle alle Pflichtfelder aus oder lade die Seite neu.",
+      });
       return;
     }
 
@@ -114,10 +122,18 @@ export default function TrainerAbrechnung() {
     ]);
 
     if (error) {
-      alert("Fehler beim Speichern 😢");
+      toast({
+        variant: "destructive",
+        title: "Fehler beim Speichern",
+        description: "Bitte versuche es erneut.",
+      });
       console.error(error);
     } else {
-      alert("Abrechnung gespeichert ✅");
+      toast({
+        title: "Erfolg",
+        description: "Abrechnung gespeichert ✅",
+      });
+
       setFormData({
         datum: "",
         sparte: "",
@@ -128,7 +144,7 @@ export default function TrainerAbrechnung() {
         funktion: "trainer",
       });
 
-      // Reload entries after submit
+      // Neu laden
       const today = new Date();
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const { data: updatedEntries, error: reloadError } = await supabase
@@ -147,6 +163,15 @@ export default function TrainerAbrechnung() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
+  };
+
+  const getWochentag = (datum: string) => {
+    try {
+      const date = parseISO(datum);
+      return format(date, "EEEE", { locale: de }); // z. B. "Montag"
+    } catch (e) {
+      return "-";
+    }
   };
 
   return (
@@ -254,6 +279,7 @@ export default function TrainerAbrechnung() {
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="text-left border-b">
+                        <th className="p-2">Wochentag</th>
                         <th className="p-2">Datum</th>
                         <th className="p-2">Sparte</th>
                         <th className="p-2">Beginn</th>
@@ -266,6 +292,7 @@ export default function TrainerAbrechnung() {
                     <tbody>
                       {entries.map((eintrag) => (
                         <tr key={eintrag.id} className="border-b">
+                          <td className="p-2">{getWochentag(eintrag.datum)}</td>
                           <td className="p-2">{eintrag.datum}</td>
                           <td className="p-2">{eintrag.sparte}</td>
                           <td className="p-2">{eintrag.beginn}</td>
