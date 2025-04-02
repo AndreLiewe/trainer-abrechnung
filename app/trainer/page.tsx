@@ -19,8 +19,6 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-// Typdefinition
-
 type Abrechnungseintrag = {
   id: string;
   datum: string;
@@ -66,21 +64,16 @@ export default function TrainerAbrechnung() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!user) return;
-
       const { data: profile } = await supabase
         .from("trainer_profiles")
         .select("name")
         .eq("email", user.email)
         .single();
-
       if (!profile) return;
-
       setTrainerName(profile.name);
       loadEntries(profile.name);
     };
-
     fetchData();
   }, []);
 
@@ -167,22 +160,10 @@ export default function TrainerAbrechnung() {
           <CardContent className="space-y-4 p-4">
             <h2 className="text-lg font-semibold">Neue Abrechnung einreichen</h2>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Datum</Label>
-                <Input type="date" value={formData.datum} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
-              </div>
-              <div>
-                <Label>Sparte</Label>
-                <Input value={formData.sparte} onChange={(e) => setFormData({ ...formData, sparte: e.target.value })} />
-              </div>
-              <div>
-                <Label>Beginn</Label>
-                <Input type="time" value={formData.beginn} onChange={(e) => setFormData({ ...formData, beginn: e.target.value })} />
-              </div>
-              <div>
-                <Label>Ende</Label>
-                <Input type="time" value={formData.ende} onChange={(e) => setFormData({ ...formData, ende: e.target.value })} />
-              </div>
+              <div><Label>Datum</Label><Input type="date" value={formData.datum} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} /></div>
+              <div><Label>Sparte</Label><Input value={formData.sparte} onChange={(e) => setFormData({ ...formData, sparte: e.target.value })} /></div>
+              <div><Label>Beginn</Label><Input type="time" value={formData.beginn} onChange={(e) => setFormData({ ...formData, beginn: e.target.value })} /></div>
+              <div><Label>Ende</Label><Input type="time" value={formData.ende} onChange={(e) => setFormData({ ...formData, ende: e.target.value })} /></div>
               <div>
                 <Label>Funktion</Label>
                 <Select value={formData.funktion} onValueChange={(val) => setFormData({ ...formData, funktion: val as "trainer" | "hilfstrainer" })}>
@@ -203,16 +184,88 @@ export default function TrainerAbrechnung() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Hallenfeld</Label>
-                <Input value={formData.hallenfeld} onChange={(e) => setFormData({ ...formData, hallenfeld: e.target.value })} />
-              </div>
+              <div><Label>Hallenfeld</Label><Input value={formData.hallenfeld} onChange={(e) => setFormData({ ...formData, hallenfeld: e.target.value })} /></div>
             </div>
             <Button className="mt-4 w-full" onClick={handleSubmit}>Einreichen</Button>
           </CardContent>
         </Card>
 
-        {/* Tabelle und Modal folgen (bereits im Canvas enthalten) */}
+        <table className="w-full text-sm border mt-6">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-2">Wochentag</th>
+              <th className="p-2">Datum</th>
+              <th className="p-2">Sparte</th>
+              <th className="p-2">Beginn</th>
+              <th className="p-2">Ende</th>
+              <th className="p-2">Funktion</th>
+              <th className="p-2">Aufbau</th>
+              <th className="p-2">Feld</th>
+              <th className="p-2">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((eintrag) => (
+              <tr key={eintrag.id} className="border-t">
+                <td className="p-2">{getWochentag(eintrag.datum)}</td>
+                <td className="p-2">{eintrag.datum}</td>
+                <td className="p-2">{eintrag.sparte}</td>
+                <td className="p-2">{eintrag.beginn}</td>
+                <td className="p-2">{eintrag.ende}</td>
+                <td className="p-2">{eintrag.funktion}</td>
+                <td className="p-2">{eintrag.aufbau ? "Ja" : "Nein"}</td>
+                <td className="p-2">{eintrag.hallenfeld}</td>
+                <td className="p-2">
+                  {editAllowed(eintrag.datum) ? (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(eintrag)}>✏️</Button>{" "}
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(eintrag.id)}>🗑️</Button>
+                    </>
+                  ) : (<span className="text-xs text-gray-400 italic">gesperrt</span>)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent className="max-w-lg">
+            <h2 className="text-lg font-semibold mb-4">Eintrag bearbeiten</h2>
+            {selectedEntry && (
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Datum</Label><Input type="date" value={selectedEntry.datum} onChange={(e) => setSelectedEntry({ ...selectedEntry, datum: e.target.value })} /></div>
+                <div><Label>Sparte</Label><Input value={selectedEntry.sparte} onChange={(e) => setSelectedEntry({ ...selectedEntry, sparte: e.target.value })} /></div>
+                <div><Label>Beginn</Label><Input type="time" value={selectedEntry.beginn} onChange={(e) => setSelectedEntry({ ...selectedEntry, beginn: e.target.value })} /></div>
+                <div><Label>Ende</Label><Input type="time" value={selectedEntry.ende} onChange={(e) => setSelectedEntry({ ...selectedEntry, ende: e.target.value })} /></div>
+                <div>
+                  <Label>Funktion</Label>
+                  <Select value={selectedEntry.funktion} onValueChange={(val) => setSelectedEntry({ ...selectedEntry, funktion: val as "trainer" | "hilfstrainer" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="trainer">Trainer</SelectItem>
+                      <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Aufbau</Label>
+                  <Select value={selectedEntry.aufbau ? "ja" : "nein"} onValueChange={(val) => setSelectedEntry({ ...selectedEntry, aufbau: val === "ja" })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ja">Ja</SelectItem>
+                      <SelectItem value="nein">Nein</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Hallenfeld</Label><Input value={selectedEntry.hallenfeld} onChange={(e) => setSelectedEntry({ ...selectedEntry, hallenfeld: e.target.value })} /></div>
+              </div>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditModalOpen(false)}>Abbrechen</Button>
+              <Button onClick={handleUpdate}>Speichern</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </RequireAuth>
   );
