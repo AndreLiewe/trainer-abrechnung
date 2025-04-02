@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
 type Abrechnungseintrag = {
   id: string;
@@ -58,6 +59,7 @@ export default function TrainerAbrechnung() {
   const [entries, setEntries] = useState<Abrechnungseintrag[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<Abrechnungseintrag | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -154,16 +156,43 @@ export default function TrainerAbrechnung() {
   return (
     <RequireAuth>
       <div className="p-6 grid gap-6 max-w-3xl mx-auto">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Trainer-Abrechnung</h1>
+          <Button variant="ghost" onClick={() => router.push("/start")}>🔙 Zurück zur Startseite</Button>
+        </div>
+
         <div className="text-sm text-gray-500">⚠️ Einträge können nur bis zum 3. des Folgemonats bearbeitet oder gelöscht werden.</div>
 
         <Card>
           <CardContent className="space-y-4 p-4">
-            <h2 className="text-lg font-semibold">Neue Abrechnung einreichen</h2>
+            <h2 className="text-lg font-semibold">Neuen Eintrag einreichen</h2>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Datum</Label><Input type="date" value={formData.datum} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} /></div>
-              <div><Label>Sparte</Label><Input value={formData.sparte} onChange={(e) => setFormData({ ...formData, sparte: e.target.value })} /></div>
-              <div><Label>Beginn</Label><Input type="time" value={formData.beginn} onChange={(e) => setFormData({ ...formData, beginn: e.target.value })} /></div>
-              <div><Label>Ende</Label><Input type="time" value={formData.ende} onChange={(e) => setFormData({ ...formData, ende: e.target.value })} /></div>
+              <div>
+                <Label>Datum</Label>
+                <Input type="date" value={formData.datum} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
+              </div>
+              <div>
+                <Label>Sparte</Label>
+                <Select value={formData.sparte} onValueChange={(val) => setFormData({ ...formData, sparte: val })}>
+                  <SelectTrigger><SelectValue placeholder="Sparte wählen" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Judo">Judo</SelectItem>
+                    <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+                    <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+                    <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+                    <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+                    <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Beginn</Label>
+                <Input type="time" value={formData.beginn} onChange={(e) => setFormData({ ...formData, beginn: e.target.value })} />
+              </div>
+              <div>
+                <Label>Ende</Label>
+                <Input type="time" value={formData.ende} onChange={(e) => setFormData({ ...formData, ende: e.target.value })} />
+              </div>
               <div>
                 <Label>Funktion</Label>
                 <Select value={formData.funktion} onValueChange={(val) => setFormData({ ...formData, funktion: val as "trainer" | "hilfstrainer" })}>
@@ -184,7 +213,17 @@ export default function TrainerAbrechnung() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Hallenfeld</Label><Input value={formData.hallenfeld} onChange={(e) => setFormData({ ...formData, hallenfeld: e.target.value })} /></div>
+              <div>
+                <Label>Hallenfeld</Label>
+                <Select value={formData.hallenfeld} onValueChange={(val) => setFormData({ ...formData, hallenfeld: val })}>
+                  <SelectTrigger><SelectValue placeholder="Feld wählen" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Feld 1</SelectItem>
+                    <SelectItem value="2">Feld 2</SelectItem>
+                    <SelectItem value="3">Feld 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Button className="mt-4 w-full" onClick={handleSubmit}>Einreichen</Button>
           </CardContent>
