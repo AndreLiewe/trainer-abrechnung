@@ -22,7 +22,8 @@ const MONATSNAMEN = [
 ];
 
 export default function MeineAbrechnungen() {
-  const [trainerName, setTrainerName] = useState("");
+    const [, setTrainerName] = useState("");
+
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(true);
 
