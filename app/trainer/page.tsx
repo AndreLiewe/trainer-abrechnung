@@ -9,7 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Label } from "@/components/ui/label";
 import RequireAuth from "@/components/RequireAuth";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -41,7 +41,6 @@ export default function TrainerAbrechnung() {
   const [entries, setEntries] = useState<Abrechnungseintrag[]>([]);
   const [loadingUser, setLoadingUser] = useState(true);
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     const getUser = async () => {
@@ -100,11 +99,7 @@ export default function TrainerAbrechnung() {
       !funktion.trim() ||
       !trainerName.trim()
     ) {
-      toast({
-        variant: "destructive",
-        title: "Fehler",
-        description: "Bitte fülle alle Pflichtfelder aus oder lade die Seite neu.",
-      });
+      toast.error("Bitte fülle alle Pflichtfelder aus oder lade die Seite neu.");
       return;
     }
 
@@ -122,17 +117,10 @@ export default function TrainerAbrechnung() {
     ]);
 
     if (error) {
-      toast({
-        variant: "destructive",
-        title: "Fehler beim Speichern",
-        description: "Bitte versuche es erneut.",
-      });
+      toast.error("Fehler beim Speichern 😢");
       console.error(error);
     } else {
-      toast({
-        title: "Erfolg",
-        description: "Abrechnung gespeichert ✅",
-      });
+      toast.success("Abrechnung gespeichert ✅");
 
       setFormData({
         datum: "",
