@@ -1,23 +1,36 @@
-// 🚀 Admin-Dashboard (Konflikte + Modal + Standardzeiten aus Supabase)
+// 🚀 Admin-Dashboard – Bereinigt & Typisiert
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
+
+// Typen
+interface Eintrag {
+  id: string;
+  datum: string;
+  sparte: string;
+  beginn: string;
+  ende: string;
+  hallenfeld: string;
+  funktion: string;
+  aufbau: boolean;
+  trainername: string;
+}
+
+interface Standardzeit {
+  wochentag: string;
+  sparte: string;
+  beginn: string;
+  ende: string;
+}
 
 function getWochentag(date: string) {
   return format(parseISO(date), "EEEE", { locale: undefined });
@@ -28,9 +41,9 @@ function zeitÜberschneidung(aStart: string, aEnde: string, bStart: string, bEnd
 }
 
 export default function AdminDashboard() {
-  const [entries, setEntries] = useState<any[]>([]);
-  const [standardzeiten, setStandardzeiten] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any | null>(null);
+  const [entries, setEntries] = useState<Eintrag[]>([]);
+  const [standardzeiten, setStandardzeiten] = useState<Standardzeit[]>([]);
+  const [selected, setSelected] = useState<Eintrag | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [onlyConflicts, setOnlyConflicts] = useState(false);
   const router = useRouter();
@@ -38,16 +51,17 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     const { data: eintraege } = await supabase.from("abrechnungen").select("*");
     const { data: sollzeiten } = await supabase.from("standardzeiten").select("*");
-    setEntries(eintraege || []);
-    setStandardzeiten(sollzeiten || []);
+    setEntries(eintraege as Eintrag[] || []);
+    setStandardzeiten(sollzeiten as Standardzeit[] || []);
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const findeKonflikte = (entry: any, all: any[]) => {
+  const findeKonflikte = (entry: Eintrag, all: Eintrag[]) => {
     const konflikte: string[] = [];
+
     const doppelt = all.filter(
       (e) =>
         e.id !== entry.id &&
@@ -85,7 +99,7 @@ export default function AdminDashboard() {
     return konflikte;
   };
 
-  const handleEdit = (entry: any) => {
+  const handleEdit = (entry: Eintrag) => {
     setSelected(entry);
     setEditOpen(true);
   };
@@ -177,8 +191,8 @@ export default function AdminDashboard() {
                 <div key={field}>
                   <Label>{field}</Label>
                   <Input
-                    value={selected[field] ?? ""}
-                    onChange={(e) => setSelected({ ...selected, [field]: e.target.value })}
+                    value={(selected as any)[field] ?? ""}
+                    onChange={(e) => setSelected({ ...selected!, [field]: e.target.value })}
                   />
                 </div>
               ))}
