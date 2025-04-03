@@ -1,4 +1,4 @@
-// 🚀 Admin-Dashboard – Kombiniert mit Eingabemaske & Konfliktprüfung
+// 🚀 Admin-Dashboard – vollständig + konfliktprüfung + Eingabemaske
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
@@ -40,17 +39,13 @@ function zeitÜberschneidung(aStart: string, aEnde: string, bStart: string, bEnd
   return !(aEnde <= bStart || bEnde <= aStart);
 }
 
-export default function AdminDashboard() {
+export default function AdminPage() {
   const [entries, setEntries] = useState<Abrechnung[]>([]);
-  const [standardzeiten, setStandardzeiten] = useState<Standardzeit[]>([]);
   const [trainerList, setTrainerList] = useState<string[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("alle");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [selected, setSelected] = useState<Abrechnung | null>(null);
-  const [onlyConflicts, setOnlyConflicts] = useState(false);
+  const [standardzeiten, setStandardzeiten] = useState<Standardzeit[]>([]);
   const [newEntry, setNewEntry] = useState({
     datum: "",
     sparte: "",
@@ -59,37 +54,27 @@ export default function AdminDashboard() {
     hallenfeld: "1",
     funktion: "trainer",
     aufbau: "nein",
-    trainername: "",
+    trainername: ""
   });
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user?.email) {
-        const { data, error } = await supabase.from("admin_users").select("email").eq("email", user.email).single();
+        const { data, error } = await supabase
+          .from("admin_users")
+          .select("email")
+          .eq("email", user.email)
+          .single();
         if (data && !error) setIsAdmin(true);
       }
     };
     checkUser();
   }, []);
-
-  const fetchData = useCallback(async () => {
-    let query = supabase.from("abrechnungen").select("*");
-    if (filterMonat) {
-      const [jahr, monat] = filterMonat.split("-");
-      const lastDay = new Date(Number(jahr), Number(monat), 0).getDate();
-      query = query.gte("datum", `${filterMonat}-01`).lte("datum", `${filterMonat}-${lastDay}`);
-    }
-    if (filterSparte !== "alle") query = query.eq("sparte", filterSparte);
-    if (filterTrainer !== "alle") query = query.eq("trainername", filterTrainer);
-    const { data } = await query;
-    setEntries(data || []);
-  }, [filterMonat, filterSparte, filterTrainer]);
-
-  useEffect(() => {
-    if (isAdmin) fetchData();
-  }, [fetchData, isAdmin]);
 
   useEffect(() => {
     const loadTrainer = async () => {
@@ -99,30 +84,38 @@ export default function AdminDashboard() {
         setTrainerList(namen);
       }
     };
-    const loadStandards = async () => {
-      const { data } = await supabase.from("standardzeiten").select("*");
-      setStandardzeiten(data || []);
-    };
     loadTrainer();
-    loadStandards();
   }, []);
 
-  const findeKonflikte = (entry: Abrechnung, all: Abrechnung[]) => {
-    const konflikte: string[] = [];
-    const doppelt = all.filter(e => e.id !== entry.id && e.trainername === entry.trainername && e.datum === entry.datum && e.beginn === entry.beginn && e.ende === entry.ende && e.sparte === entry.sparte && e.hallenfeld === entry.hallenfeld);
-    if (doppelt.length) konflikte.push("Doppelteingabe erkannt");
-    const gleichesFeld = all.filter(e => e.id !== entry.id && e.datum === entry.datum && e.hallenfeld === entry.hallenfeld && zeitÜberschneidung(entry.beginn, entry.ende, e.beginn, e.ende));
-    gleichesFeld.forEach(e => {
-      if (e.sparte !== entry.sparte) konflikte.push("Gleiches Feld: unterschiedliche Sparte");
-      else if (e.funktion === "trainer" && entry.funktion === "trainer") konflikte.push("Gleichzeitige Trainer (nicht Hilfstrainer)");
-    });
-    const soll = standardzeiten.find(s => s.wochentag === getWochentag(entry.datum) && s.sparte === entry.sparte);
-    if (soll && (entry.beginn !== soll.beginn || entry.ende !== soll.ende)) konflikte.push("Abweichung vom Standardzeitplan");
-    return konflikte;
-  };
+  const fetchData = useCallback(async () => {
+    let query = supabase.from("abrechnungen").select("*");
+    if (filterMonat) {
+      const [jahr, monat] = filterMonat.split("-");
+      const lastDay = new Date(Number(jahr), Number(monat), 0).getDate();
+      query = query
+        .gte("datum", `${filterMonat}-01`)
+        .lte("datum", `${filterMonat}-${lastDay}`);
+    }
+    if (filterSparte !== "alle") {
+      query = query.eq("sparte", filterSparte);
+    }
+    if (filterTrainer && filterTrainer !== "alle") {
+      query = query.eq("trainername", filterTrainer);
+    }
+    const { data } = await query;
+    setEntries(data || []);
+
+    const { data: sollzeiten } = await supabase.from("standardzeiten").select("*");
+    if (sollzeiten) setStandardzeiten(sollzeiten as Standardzeit[]);
+  }, [filterMonat, filterSparte, filterTrainer]);
+
+  useEffect(() => {
+    if (isAdmin) fetchData();
+  }, [fetchData, isAdmin]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Wirklich löschen?")) return;
+    const confirmed = confirm("Wirklich löschen?");
+    if (!confirmed) return;
     await supabase.from("abrechnungen").delete().eq("id", id);
     fetchData();
   };
@@ -137,18 +130,84 @@ export default function AdminDashboard() {
       toast.error("Bitte alle Felder ausfüllen");
       return;
     }
-    await supabase.from("abrechnungen").insert([{ datum, sparte, beginn, ende, hallenfeld, funktion, aufbau: aufbau === "ja", trainername }]);
+    await supabase.from("abrechnungen").insert([
+      {
+        datum,
+        sparte,
+        beginn,
+        ende,
+        hallenfeld,
+        funktion,
+        aufbau: aufbau === "ja",
+        trainername,
+      },
+    ]);
     setNewEntry({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
-    toast.success("Eintrag gespeichert ✅");
     fetchData();
   };
 
+  const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string) => {
+    const [hBeginn, mBeginn] = beginn.split(":" ).map(Number);
+    const [hEnde, mEnde] = ende.split(":" ).map(Number);
+    const beginnMin = hBeginn * 60 + mBeginn;
+    let endeMin = hEnde * 60 + mEnde;
+    if (endeMin < beginnMin) endeMin += 24 * 60;
+
+    let dauer = (endeMin - beginnMin) / 60;
+    if (aufbau) dauer += 0.5;
+
+    const stundenlohn = funktion === "hilfstrainer" ? 10 : 20;
+    const betrag = dauer * stundenlohn;
+    return betrag.toFixed(2);
+  };
+
+  const findeKonflikte = (entry: Abrechnung, all: Abrechnung[]) => {
+    const konflikte: string[] = [];
+
+    const doppelt = all.filter(
+      (e) =>
+        e.id !== entry.id &&
+        e.trainername === entry.trainername &&
+        e.datum === entry.datum &&
+        e.beginn === entry.beginn &&
+        e.ende === entry.ende &&
+        e.sparte === entry.sparte &&
+        e.hallenfeld === entry.hallenfeld
+    );
+    if (doppelt.length) konflikte.push("Doppelteingabe erkannt");
+
+    const gleichesFeld = all.filter(
+      (e) =>
+        e.id !== entry.id &&
+        e.datum === entry.datum &&
+        e.hallenfeld === entry.hallenfeld &&
+        zeitÜberschneidung(entry.beginn, entry.ende, e.beginn, e.ende)
+    );
+    gleichesFeld.forEach((e) => {
+      if (e.sparte !== entry.sparte) {
+        konflikte.push("Gleiches Feld: unterschiedliche Sparte");
+      } else if (e.funktion === "trainer" && entry.funktion === "trainer") {
+        konflikte.push("Gleichzeitige Trainer (nicht Hilfstrainer)");
+      }
+    });
+
+    const soll = standardzeiten.find(
+      (s) => s.wochentag === getWochentag(entry.datum) && s.sparte === entry.sparte
+    );
+    if (soll && (entry.beginn !== soll.beginn || entry.ende !== soll.ende)) {
+      konflikte.push("Abweichung vom Standardzeitplan");
+    }
+
+    return konflikte;
+  };
+
+  if (!isAdmin) {
+    return <div className="p-6 text-center">Kein Zugriff ❌</div>;
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Admin-Dashboard</h1>
-        <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zurück</Button>
-      </div>
+      <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
 
       <div className="flex gap-4 mb-6 flex-wrap">
         <div>
@@ -184,13 +243,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mb-4">
-        <label className="text-sm flex gap-2 items-center">
-          <input type="checkbox" checked={onlyConflicts} onChange={(e) => setOnlyConflicts(e.target.checked)} />
-          Nur Einträge mit Konflikten anzeigen
-        </label>
-      </div>
-
       <Card>
         <CardContent className="overflow-x-auto p-4">
           <table className="w-full text-sm">
@@ -210,11 +262,10 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {entries
-                .map((e) => ({ ...e, konflikte: findeKonflikte(e, entries) }))
-                .filter((e) => !onlyConflicts || e.konflikte.length > 0)
-                .map((e) => (
-                  <tr key={e.id} className={e.konflikte.length ? "bg-yellow-100" : ""}>
+              {entries.map((e) => {
+                const konflikte = findeKonflikte(e, entries);
+                return (
+                  <tr key={e.id} className={konflikte.length ? "bg-yellow-100" : ""}>
                     <td>{e.datum}</td>
                     <td>{e.sparte}</td>
                     <td>{e.beginn}</td>
@@ -224,15 +275,13 @@ export default function AdminDashboard() {
                     <td>{e.aufbau ? "Ja" : "Nein"}</td>
                     <td>{e.trainername}</td>
                     <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
-                    <td title={e.konflikte.join("\n")}>
-                      {e.konflikte.length > 0 ? "⚠️" : ""}
-                    </td>
-                    <td className="space-x-1">
-                      <Button size="sm" variant="outline" onClick={() => setSelected(e)}>✏️</Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>🗑️</Button>
+                    <td title={konflikte.join("\n")}>{konflikte.length ? "⚠️" : ""}</td>
+                    <td>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
             </tbody>
           </table>
         </CardContent>
@@ -287,6 +336,10 @@ export default function AdminDashboard() {
           </Select>
         </div>
         <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
+      </div>
+
+      <div className="mt-8 text-center">
+        <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
       </div>
     </div>
   );
