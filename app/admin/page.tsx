@@ -1,4 +1,4 @@
-// 🚀 Admin-Dashboard – Bereinigt & Typisiert
+// 🚀 Admin-Dashboard – Bereinigt & Typsicher (final)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -187,12 +187,12 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-bold mb-4">Eintrag bearbeiten</h2>
           {selected && (
             <div className="grid grid-cols-2 gap-4">
-              {["datum", "sparte", "beginn", "ende", "funktion", "aufbau", "hallenfeld", "trainername"].map((field) => (
+              {(["datum", "sparte", "beginn", "ende", "funktion", "aufbau", "hallenfeld", "trainername"] as (keyof Eintrag)[]).map((field) => (
                 <div key={field}>
                   <Label>{field}</Label>
                   <Input
-                    value={(selected as any)[field] ?? ""}
-                    onChange={(e) => setSelected({ ...selected!, [field]: e.target.value })}
+                    value={selected?.[field] ?? ""}
+                    onChange={(e) => setSelected({ ...selected, [field]: e.target.value })}
                   />
                 </div>
               ))}
