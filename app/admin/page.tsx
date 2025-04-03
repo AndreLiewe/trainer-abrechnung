@@ -168,9 +168,7 @@ export default function AdminDashboard() {
                     <td>{e.funktion}</td>
                     <td>{e.aufbau ? "Ja" : "Nein"}</td>
                     <td>{e.trainername}</td>
-                    <td title={e.konflikte.join("\n")}>
-                      {e.konflikte.length > 0 ? "⚠️" : ""}
-                    </td>
+                    <td title={e.konflikte.join("\n")}>{e.konflikte.length > 0 ? "⚠️" : ""}</td>
                     <td className="space-x-1">
                       <Button size="sm" variant="outline" onClick={() => handleEdit(e)}>✏️</Button>
                       <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>🗑️</Button>
@@ -187,12 +185,17 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-bold mb-4">Eintrag bearbeiten</h2>
           {selected && (
             <div className="grid grid-cols-2 gap-4">
-              {(["datum", "sparte", "beginn", "ende", "funktion", "aufbau", "hallenfeld", "trainername"] as (keyof Eintrag)[]).map((field) => (
+              {(["datum", "sparte", "beginn", "ende", "funktion", "hallenfeld", "trainername"] as (keyof Eintrag)[]).map((field) => (
                 <div key={field}>
                   <Label>{field}</Label>
                   <Input
-                    value={selected?.[field] ?? ""}
-                    onChange={(e) => setSelected({ ...selected, [field]: e.target.value })}
+                    value={typeof selected[field] === "boolean" ? (selected[field] ? "ja" : "nein") : selected[field] ?? ""}
+                    onChange={(e) =>
+                      setSelected({
+                        ...selected,
+                        [field]: field === "aufbau" ? e.target.value === "ja" : e.target.value,
+                      })
+                    }
                   />
                 </div>
               ))}
