@@ -1,18 +1,26 @@
-// 🚀 Admin-Dashboard – vollständig + konfliktprüfung + Eingabemaske
+// 🚀 Admin-Dashboard – Bereinigt, vollständig & mit Bearbeitung + Abrechnungs-Sperre
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 
-interface Abrechnung {
+// Typen
+type Abrechnung = {
   id: string;
   datum: string;
   sparte: string;
@@ -22,14 +30,20 @@ interface Abrechnung {
   funktion: string;
   aufbau: boolean;
   trainername: string;
-}
+};
 
-interface Standardzeit {
+type Standardzeit = {
   wochentag: string;
   sparte: string;
   beginn: string;
   ende: string;
-}
+};
+
+type Abrechnungslauf = {
+  id: string;
+  monat: string; // z. B. "2024-04"
+  trainername: string;
+};
 
 function getWochentag(date: string) {
   return format(parseISO(date), "EEEE", { locale: undefined });
@@ -39,85 +53,96 @@ function zeitÜberschneidung(aStart: string, aEnde: string, bStart: string, bEnd
   return !(aEnde <= bStart || bEnde <= aStart);
 }
 
-export default function AdminPage() {
+function getMonatYYYYMM(date: string) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export default function AdminDashboard() {
   const [entries, setEntries] = useState<Abrechnung[]>([]);
+  const [standardzeiten, setStandardzeiten] = useState<Standardzeit[]>([]);
+  const [abrechnungen, setAbrechnungen] = useState<Abrechnungslauf[]>([]);
   const [trainerList, setTrainerList] = useState<string[]>([]);
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("alle");
-  const [standardzeiten, setStandardzeiten] = useState<Standardzeit[]>([]);
-  const [newEntry, setNewEntry] = useState({
-    datum: "",
-    sparte: "",
-    beginn: "",
-    ende: "",
-    hallenfeld: "1",
-    funktion: "trainer",
-    aufbau: "nein",
-    trainername: ""
-  });
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selected, setSelected] = useState<Abrechnung | null>(null);
+  const [newEntry, setNewEntry] = useState({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: "nein", trainername: "" });
   const router = useRouter();
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user?.email) {
-        const { data, error } = await supabase
-          .from("admin_users")
-          .select("email")
-          .eq("email", user.email)
-          .single();
-        if (data && !error) setIsAdmin(true);
-      }
-    };
-    checkUser();
-  }, []);
-
-  useEffect(() => {
-    const loadTrainer = async () => {
-      const { data } = await supabase.from("trainer_profiles").select("name");
-      if (data) {
-        const namen = data.map((t) => t.name).filter((n) => !!n);
-        setTrainerList(namen);
-      }
-    };
-    loadTrainer();
-  }, []);
-
-  const fetchData = useCallback(async () => {
-    let query = supabase.from("abrechnungen").select("*");
-    if (filterMonat) {
-      const [jahr, monat] = filterMonat.split("-");
-      const lastDay = new Date(Number(jahr), Number(monat), 0).getDate();
-      query = query
-        .gte("datum", `${filterMonat}-01`)
-        .lte("datum", `${filterMonat}-${lastDay}`);
-    }
-    if (filterSparte !== "alle") {
-      query = query.eq("sparte", filterSparte);
-    }
-    if (filterTrainer && filterTrainer !== "alle") {
-      query = query.eq("trainername", filterTrainer);
-    }
-    const { data } = await query;
-    setEntries(data || []);
-
+  const fetchData = async () => {
+    const { data: eintraege } = await supabase.from("abrechnungen").select("*");
     const { data: sollzeiten } = await supabase.from("standardzeiten").select("*");
-    if (sollzeiten) setStandardzeiten(sollzeiten as Standardzeit[]);
-  }, [filterMonat, filterSparte, filterTrainer]);
+    const { data: abrechnungData } = await supabase.from("abrechnungslauf").select("*");
+    const { data: trainer } = await supabase.from("trainer_profiles").select("name");
+    setEntries(eintraege || []);
+    setStandardzeiten(sollzeiten || []);
+    setAbrechnungen(abrechnungData || []);
+    setTrainerList(trainer?.map((t) => t.name) || []);
+  };
 
   useEffect(() => {
-    if (isAdmin) fetchData();
-  }, [fetchData, isAdmin]);
+    fetchData();
+  }, []);
+
+  const findeKonflikte = (entry: Abrechnung, all: Abrechnung[]) => {
+    const konflikte: string[] = [];
+    const doppelt = all.filter((e) => e.id !== entry.id && e.trainername === entry.trainername && e.datum === entry.datum && e.beginn === entry.beginn && e.ende === entry.ende && e.sparte === entry.sparte && e.hallenfeld === entry.hallenfeld);
+    if (doppelt.length) konflikte.push("Doppelteingabe erkannt");
+
+    const gleichesFeld = all.filter((e) => e.id !== entry.id && e.datum === entry.datum && e.hallenfeld === entry.hallenfeld && zeitÜberschneidung(entry.beginn, entry.ende, e.beginn, e.ende));
+    gleichesFeld.forEach((e) => {
+      if (e.sparte !== entry.sparte) {
+        konflikte.push("Gleiches Feld: unterschiedliche Sparte");
+      } else if (e.funktion === "trainer" && entry.funktion === "trainer") {
+        konflikte.push("Gleichzeitige Trainer (nicht Hilfstrainer)");
+      }
+    });
+
+    const soll = standardzeiten.find((s) => s.wochentag === getWochentag(entry.datum) && s.sparte === entry.sparte);
+    if (soll && (entry.beginn !== soll.beginn || entry.ende !== soll.ende)) {
+      konflikte.push("Abweichung vom Standardzeitplan");
+    }
+    return konflikte;
+  };
+
+  const eintragGesperrt = (entry: Abrechnung) => {
+    const monat = getMonatYYYYMM(entry.datum);
+    return abrechnungen.some((a) => a.trainername === entry.trainername && a.monat === monat);
+  };
 
   const handleDelete = async (id: string) => {
-    const confirmed = confirm("Wirklich löschen?");
-    if (!confirmed) return;
+    const eintrag = entries.find((e) => e.id === id);
+    if (!eintrag || eintragGesperrt(eintrag)) {
+      toast.error("Eintrag ist gesperrt (bereits abgerechnet)");
+      return;
+    }
+    if (!confirm("Wirklich löschen?")) return;
     await supabase.from("abrechnungen").delete().eq("id", id);
     fetchData();
+  };
+
+  const handleEdit = (entry: Abrechnung) => {
+    if (eintragGesperrt(entry)) {
+      toast.error("Bearbeitung nicht möglich: Abrechnung existiert");
+      return;
+    }
+    setSelected(entry);
+    setEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!selected) return;
+    const { id, ...updateData } = selected;
+    const { error } = await supabase.from("abrechnungen").update(updateData).eq("id", id);
+    if (!error) {
+      toast.success("Aktualisiert ✅");
+      setEditOpen(false);
+      fetchData();
+    } else {
+      toast.error("Fehler beim Speichern");
+    }
   };
 
   const handleNewChange = (key: string, value: string) => {
@@ -147,67 +172,23 @@ export default function AdminPage() {
   };
 
   const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string) => {
-    const [hBeginn, mBeginn] = beginn.split(":" ).map(Number);
-    const [hEnde, mEnde] = ende.split(":" ).map(Number);
+    const [hBeginn, mBeginn] = beginn.split(":").map(Number);
+    const [hEnde, mEnde] = ende.split(":").map(Number);
     const beginnMin = hBeginn * 60 + mBeginn;
     let endeMin = hEnde * 60 + mEnde;
     if (endeMin < beginnMin) endeMin += 24 * 60;
-
     let dauer = (endeMin - beginnMin) / 60;
     if (aufbau) dauer += 0.5;
-
     const stundenlohn = funktion === "hilfstrainer" ? 10 : 20;
-    const betrag = dauer * stundenlohn;
-    return betrag.toFixed(2);
+    return (dauer * stundenlohn).toFixed(2);
   };
-
-  const findeKonflikte = (entry: Abrechnung, all: Abrechnung[]) => {
-    const konflikte: string[] = [];
-
-    const doppelt = all.filter(
-      (e) =>
-        e.id !== entry.id &&
-        e.trainername === entry.trainername &&
-        e.datum === entry.datum &&
-        e.beginn === entry.beginn &&
-        e.ende === entry.ende &&
-        e.sparte === entry.sparte &&
-        e.hallenfeld === entry.hallenfeld
-    );
-    if (doppelt.length) konflikte.push("Doppelteingabe erkannt");
-
-    const gleichesFeld = all.filter(
-      (e) =>
-        e.id !== entry.id &&
-        e.datum === entry.datum &&
-        e.hallenfeld === entry.hallenfeld &&
-        zeitÜberschneidung(entry.beginn, entry.ende, e.beginn, e.ende)
-    );
-    gleichesFeld.forEach((e) => {
-      if (e.sparte !== entry.sparte) {
-        konflikte.push("Gleiches Feld: unterschiedliche Sparte");
-      } else if (e.funktion === "trainer" && entry.funktion === "trainer") {
-        konflikte.push("Gleichzeitige Trainer (nicht Hilfstrainer)");
-      }
-    });
-
-    const soll = standardzeiten.find(
-      (s) => s.wochentag === getWochentag(entry.datum) && s.sparte === entry.sparte
-    );
-    if (soll && (entry.beginn !== soll.beginn || entry.ende !== soll.ende)) {
-      konflikte.push("Abweichung vom Standardzeitplan");
-    }
-
-    return konflikte;
-  };
-
-  if (!isAdmin) {
-    return <div className="p-6 text-center">Kein Zugriff ❌</div>;
-  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Admin-Dashboard</h1>
+        <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zurück</Button>
+      </div>
 
       <div className="flex gap-4 mb-6 flex-wrap">
         <div>
@@ -275,9 +256,10 @@ export default function AdminPage() {
                     <td>{e.aufbau ? "Ja" : "Nein"}</td>
                     <td>{e.trainername}</td>
                     <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
-                    <td title={konflikte.join("\n")}>{konflikte.length ? "⚠️" : ""}</td>
-                    <td>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
+                    <td title={konflikte.join("\n")}>{konflikte.length > 0 ? "⚠️" : ""}</td>
+                    <td className="space-x-1">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(e)}>✏️</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>🗑️</Button>
                     </td>
                   </tr>
                 );
@@ -290,7 +272,7 @@ export default function AdminPage() {
       <div className="mt-6">
         <h2 className="text-lg font-bold mb-2">Neuen Eintrag hinzufügen</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <Input type="date" placeholder="Datum" value={newEntry.datum} onChange={(e) => handleNewChange("datum", e.target.value)} />
+          <Input type="date" value={newEntry.datum} onChange={(e) => handleNewChange("datum", e.target.value)} />
           <Select value={newEntry.sparte} onValueChange={(val) => handleNewChange("sparte", val)}>
             <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
             <SelectContent>
@@ -302,8 +284,8 @@ export default function AdminPage() {
               <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
             </SelectContent>
           </Select>
-          <Input type="time" placeholder="Beginn" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
-          <Input type="time" placeholder="Ende" value={newEntry.ende} onChange={(e) => handleNewChange("ende", e.target.value)} />
+          <Input type="time" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
+          <Input type="time" value={newEntry.ende} onChange={(e) => handleNewChange("ende", e.target.value)} />
           <Select value={newEntry.hallenfeld} onValueChange={(val) => handleNewChange("hallenfeld", val)}>
             <SelectTrigger><SelectValue placeholder="Feld" /></SelectTrigger>
             <SelectContent>
@@ -338,9 +320,11 @@ export default function AdminPage() {
         <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
       </div>
 
-      <div className="mt-8 text-center">
-        <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
-      </div>
-    </div>
-  );
-}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <h2 className="text-lg font-bold mb-4">Eintrag bearbeiten</h2>
+          {selected && (
+            <div className="grid grid-cols-2 gap-4">
+              {(["datum", "sparte", "beginn", "ende", "funktion", "aufbau", "hallenfeld", "trainername"] as (keyof Abrechnung)[]).map((field) => (
+                <div key={field}>
+                  <Label>{field}</Label>
