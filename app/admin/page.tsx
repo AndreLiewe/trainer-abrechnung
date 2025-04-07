@@ -1,3 +1,4 @@
+// 🚀 Admin-Dashboard – Vollständiger Code
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,7 +18,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { de } from "date-fns/locale";
 
 // Typen
 type Abrechnung = {
@@ -40,7 +40,7 @@ type Standardzeit = {
 };
 
 function getWochentag(date: string) {
-  return format(parseISO(date), "EEEE", { locale: de });
+  return format(parseISO(date), "EEEE", { locale: undefined });
 }
 
 function zeitÜberschneidung(aStart: string, aEnde: string, bStart: string, bEnde: string) {
@@ -54,16 +54,7 @@ export default function AdminDashboard() {
   const [filterMonat, setFilterMonat] = useState("");
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("alle");
-  const [newEntry, setNewEntry] = useState({
-    datum: "",
-    sparte: "",
-    beginn: "",
-    ende: "",
-    hallenfeld: "1",
-    funktion: "trainer",
-    aufbau: "nein",
-    trainername: "",
-  });
+  const [newEntry, setNewEntry] = useState({ datum: "", sparte: "", beginn: "", ende: "", hallenfeld: "1", funktion: "trainer", aufbau: false, trainername: "" });
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState<Abrechnung | null>(null);
   const router = useRouter();
@@ -83,23 +74,10 @@ export default function AdminDashboard() {
 
   const findeKonflikte = (entry: Abrechnung, all: Abrechnung[]) => {
     const konflikte: string[] = [];
-    const doppelt = all.filter((e) =>
-      e.id !== entry.id &&
-      e.trainername === entry.trainername &&
-      e.datum === entry.datum &&
-      e.beginn === entry.beginn &&
-      e.ende === entry.ende &&
-      e.sparte === entry.sparte &&
-      e.hallenfeld === entry.hallenfeld
-    );
+    const doppelt = all.filter((e) => e.id !== entry.id && e.trainername === entry.trainername && e.datum === entry.datum && e.beginn === entry.beginn && e.ende === entry.ende && e.sparte === entry.sparte && e.hallenfeld === entry.hallenfeld);
     if (doppelt.length) konflikte.push("Doppelteingabe erkannt");
 
-    const gleichesFeld = all.filter((e) =>
-      e.id !== entry.id &&
-      e.datum === entry.datum &&
-      e.hallenfeld === entry.hallenfeld &&
-      zeitÜberschneidung(entry.beginn, entry.ende, e.beginn, e.ende)
-    );
+    const gleichesFeld = all.filter((e) => e.id !== entry.id && e.datum === entry.datum && e.hallenfeld === entry.hallenfeld && zeitÜberschneidung(entry.beginn, entry.ende, e.beginn, e.ende));
     gleichesFeld.forEach((e) => {
       if (e.sparte !== entry.sparte) {
         konflikte.push("Gleiches Feld: unterschiedliche Sparte");
@@ -108,9 +86,7 @@ export default function AdminDashboard() {
       }
     });
 
-    const soll = standardzeiten.find(
-      (s) => s.wochentag === getWochentag(entry.datum) && s.sparte === entry.sparte
-    );
+    const soll = standardzeiten.find((s) => s.wochentag === getWochentag(entry.datum) && s.sparte === entry.sparte);
     if (soll && (entry.beginn !== soll.beginn || entry.ende !== soll.ende)) {
       konflikte.push("Abweichung vom Standardzeitplan");
     }
@@ -121,6 +97,7 @@ export default function AdminDashboard() {
     const { data } = await supabase.from("abrechnungen_export").select("eintrag_id").eq("eintrag_id", eintragId);
     return data && data.length > 0;
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Wirklich löschen?")) return;
     if (await eintragAbgerechnet(id)) {
@@ -143,10 +120,7 @@ export default function AdminDashboard() {
       return;
     }
     const { id, ...updateData } = selected;
-    const { error } = await supabase
-      .from("abrechnungen")
-      .update(updateData)
-      .eq("id", id);
+    const { error } = await supabase.from("abrechnungen").update(updateData).eq("id", id);
     if (!error) {
       toast.success("Aktualisiert ✅");
       setEditOpen(false);
@@ -156,6 +130,12 @@ export default function AdminDashboard() {
     }
   };
 
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Admin-Dashboard</h1>
+        <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zurück</Button>
+      </div>
   const handleNewChange = (key: string, value: string) => {
     setNewEntry({ ...newEntry, [key]: value });
   };
