@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
+import "dayjs/locale/de";
+dayjs.locale("de");
+
 
 type Abrechnung = {
   id: string;
@@ -29,6 +33,7 @@ export default function AdminPage() {
   const [filterTrainer, setFilterTrainer] = useState("alle");
   const [isAdmin, setIsAdmin] = useState(false);
   const [editEntry, setEditEntry] = useState<Abrechnung | null>(null);
+  const [sortAscending, setSortAscending] = useState(true);
   const [newEntry, setNewEntry] = useState({
     datum: "",
     sparte: "",
@@ -148,7 +153,7 @@ export default function AdminPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
 {editEntry && (
-  <div className="grid grid-cols-2 gap-4">
+  <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex justify-center items-center z-50">
     <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl space-y-4">
       <h2 className="text-lg font-bold">Eintrag bearbeiten</h2>
 
@@ -165,8 +170,6 @@ export default function AdminPage() {
     <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
   </SelectContent>
 </Select>
-
-        
         <Input type="time" value={editEntry.beginn} onChange={(e) => setEditEntry({ ...editEntry, beginn: e.target.value })} />
         <Input type="time" value={editEntry.ende} onChange={(e) => setEditEntry({ ...editEntry, ende: e.target.value })} />
         <Select value={editEntry.hallenfeld} onValueChange={(val) => setEditEntry({ ...editEntry, hallenfeld: val })}>
@@ -256,7 +259,12 @@ export default function AdminPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b">
-                <th>Datum</th>
+                <th>Wochentag</th>
+                <th>
+  <button onClick={() => setSortAscending(!sortAscending)} className="underline">
+    Datum {sortAscending ? "⬆️" : "⬇️"}
+  </button>
+</th>
                 <th>Sparte</th>
                 <th>Beginn</th>
                 <th>Ende</th>
@@ -269,8 +277,14 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {entries.map((e) => (
+              {[...entries]
+  .sort((a, b) => sortAscending
+    ? a.datum.localeCompare(b.datum)
+    : b.datum.localeCompare(a.datum)
+  )
+  .map((e) => (
                 <tr key={e.id} className="border-b hover:bg-gray-50">
+                  <td>{dayjs(e.datum).format("dddd")}</td>
                   <td>{e.datum}</td>
                   <td>{e.sparte}</td>
                   <td>{e.beginn}</td>
