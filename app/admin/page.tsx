@@ -315,7 +315,7 @@ export default function AdminPage() {
   .map((e) => (
                 <tr key={e.id} className="border-b hover:bg-gray-50">
                   <td>{dayjs(e.datum).format("dddd")}</td>
-                  <td>{e.datum}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
+                  <td>{e.datum}</td>
                   <td>{e.sparte}</td>
                   <td>{e.beginn}</td>
                   <td>{e.ende}</td>
@@ -324,6 +324,7 @@ export default function AdminPage() {
                   <td>{e.aufbau ? "Ja" : "Nein"}</td>
                   <td>{e.trainername}</td>
                   <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
+                  <td className="text-red-600">{findeKonflikt(e, entries)}</td>
                   <td className="space-x-2">
                   <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
                   <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
