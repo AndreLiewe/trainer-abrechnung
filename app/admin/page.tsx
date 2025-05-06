@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [filterSparte, setFilterSparte] = useState("alle");
   const [filterTrainer, setFilterTrainer] = useState("alle");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editEntry, setEditEntry] = useState<Abrechnung | null>(null);
   const [newEntry, setNewEntry] = useState({
     datum: "",
     sparte: "",
@@ -142,6 +143,50 @@ export default function AdminPage() {
   if (!isAdmin) {
     return <div className="p-6 text-center">Kein Zugriff ❌</div>;
   }
+{editEntry && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl space-y-4">
+      <h2 className="text-lg font-bold">Eintrag bearbeiten</h2>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Input type="date" value={editEntry.datum} onChange={(e) => setEditEntry({ ...editEntry, datum: e.target.value })} />
+        <Input value={editEntry.sparte} onChange={(e) => setEditEntry({ ...editEntry, sparte: e.target.value })} />
+        <Input type="time" value={editEntry.beginn} onChange={(e) => setEditEntry({ ...editEntry, beginn: e.target.value })} />
+        <Input type="time" value={editEntry.ende} onChange={(e) => setEditEntry({ ...editEntry, ende: e.target.value })} />
+        <Input value={editEntry.hallenfeld} onChange={(e) => setEditEntry({ ...editEntry, hallenfeld: e.target.value })} />
+        <Select value={editEntry.funktion} onValueChange={(val) => setEditEntry({ ...editEntry, funktion: val })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="trainer">Trainer</SelectItem>
+            <SelectItem value="hilfstrainer">Hilfstrainer</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={editEntry.aufbau ? "ja" : "nein"} onValueChange={(val) => setEditEntry({ ...editEntry, aufbau: val === "ja" })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ja">Ja</SelectItem>
+            <SelectItem value="nein">Nein</SelectItem>
+          </SelectContent>
+        </Select>
+        <Input value={editEntry.trainername} onChange={(e) => setEditEntry({ ...editEntry, trainername: e.target.value })} />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={() => setEditEntry(null)}>Abbrechen</Button>
+        <Button onClick={async () => {
+          const { error } = await supabase.from("abrechnungen").update(editEntry).eq("id", editEntry.id);
+          if (!error) {
+            setEditEntry(null);
+            fetchData();
+          } else {
+            alert("Fehler beim Speichern");
+            console.error(error);
+          }
+        }}>Speichern</Button>
+      </div>
+    </div>
+  </div>
+)}
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -210,8 +255,9 @@ export default function AdminPage() {
                   <td>{e.aufbau ? "Ja" : "Nein"}</td>
                   <td>{e.trainername}</td>
                   <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
-                  <td>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
+                  <td className="space-x-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
                   </td>
                 </tr>
               ))}
