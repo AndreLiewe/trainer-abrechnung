@@ -143,6 +143,10 @@ export default function AdminPage() {
   if (!isAdmin) {
     return <div className="p-6 text-center">Kein Zugriff ❌</div>;
   }
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
 {editEntry && (
   <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
     <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl space-y-4">
@@ -187,11 +191,6 @@ export default function AdminPage() {
     </div>
   </div>
 )}
-
-  return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
-
       <div className="flex gap-4 mb-6 flex-wrap">
         <div>
           <Label>Monat</Label>
