@@ -148,7 +148,7 @@ export default function AdminPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
 {editEntry && (
-  <div className="fixed inset-0 bg-white bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
+  <div className="grid grid-cols-2 gap-4">
     <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl space-y-4">
       <h2 className="text-lg font-bold">Eintrag bearbeiten</h2>
 
