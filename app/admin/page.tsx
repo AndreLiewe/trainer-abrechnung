@@ -316,13 +316,13 @@ export default function AdminPage() {
                 <tr key={e.id} className="border-b hover:bg-gray-50">
                   <td>{dayjs(e.datum).format("dddd")}</td>
                   <td>{e.datum}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
-                  <td>{e.sparte}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
-                  <td>{e.beginn}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
-                  <td>{e.ende}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
-                  <td>{e.hallenfeld}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>             
-                  <td>{e.funktion}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
+                  <td>{e.sparte}</td>
+                  <td>{e.beginn}</td>
+                  <td>{e.ende}</td>
+                  <td>{e.hallenfeld}</td>     
+                  <td>{e.funktion}</td>
                   <td>{e.aufbau ? "Ja" : "Nein"}</td>
-                  <td>{e.trainername}</td><td className="text-red-600">{findeKonflikt(e, entries)}</td>
+                  <td>{e.trainername}</td>
                   <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
                   <td className="space-x-2">
                   <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
