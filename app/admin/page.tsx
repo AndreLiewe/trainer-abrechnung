@@ -148,16 +148,35 @@ export default function AdminPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Admin-Dashboard</h1>
 {editEntry && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+  <div className="fixed inset-0 bg-white bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
     <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl space-y-4">
       <h2 className="text-lg font-bold">Eintrag bearbeiten</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Input type="date" value={editEntry.datum} onChange={(e) => setEditEntry({ ...editEntry, datum: e.target.value })} />
-        <Input value={editEntry.sparte} onChange={(e) => setEditEntry({ ...editEntry, sparte: e.target.value })} />
+        <Select value={editEntry.sparte} onValueChange={(val) => setEditEntry({ ...editEntry, sparte: val })}>
+  <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
+  <SelectContent>
+    <SelectItem value="Judo">Judo</SelectItem>
+    <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
+    <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
+    <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+    <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
+    <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+  </SelectContent>
+</Select>
+
+        
         <Input type="time" value={editEntry.beginn} onChange={(e) => setEditEntry({ ...editEntry, beginn: e.target.value })} />
         <Input type="time" value={editEntry.ende} onChange={(e) => setEditEntry({ ...editEntry, ende: e.target.value })} />
-        <Input value={editEntry.hallenfeld} onChange={(e) => setEditEntry({ ...editEntry, hallenfeld: e.target.value })} />
+        <Select value={editEntry.hallenfeld} onValueChange={(val) => setEditEntry({ ...editEntry, hallenfeld: val })}>
+  <SelectTrigger><SelectValue placeholder="Feld" /></SelectTrigger>
+  <SelectContent>
+    <SelectItem value="1">Feld 1</SelectItem>
+    <SelectItem value="2">Feld 2</SelectItem>
+    <SelectItem value="3">Feld 3</SelectItem>
+  </SelectContent>
+</Select>
         <Select value={editEntry.funktion} onValueChange={(val) => setEditEntry({ ...editEntry, funktion: val })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -172,7 +191,14 @@ export default function AdminPage() {
             <SelectItem value="nein">Nein</SelectItem>
           </SelectContent>
         </Select>
-        <Input value={editEntry.trainername} onChange={(e) => setEditEntry({ ...editEntry, trainername: e.target.value })} />
+       <Select value={editEntry.trainername} onValueChange={(val) => setEditEntry({ ...editEntry, trainername: val })}>
+  <SelectTrigger><SelectValue placeholder="Trainer" /></SelectTrigger>
+  <SelectContent>
+    {trainerList.map((name) => (
+      <SelectItem key={name} value={name}>{name}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
       </div>
 
       <div className="flex justify-end gap-2">
