@@ -146,6 +146,34 @@ export default function AdminPage() {
     return betrag.toFixed(2);
   };
 
+  const findeKonflikt = (eintrag: Abrechnung, alle: Abrechnung[]) => {
+  const start1 = new Date(`${eintrag.datum}T${eintrag.beginn}`);
+  const end1 = new Date(`${eintrag.datum}T${eintrag.ende}`);
+  if (end1 <= start1) end1.setDate(end1.getDate() + 1); // bei Zeit über Mitternacht
+
+  for (const anderer of alle) {
+    if (anderer.id === eintrag.id) continue;
+
+    const start2 = new Date(`${anderer.datum}T${anderer.beginn}`);
+    const end2 = new Date(`${anderer.datum}T${anderer.ende}`);
+    if (end2 <= start2) end2.setDate(end2.getDate() + 1);
+
+    const gleicheZeit = start1 < end2 && end1 > start2;
+    const gleichesFeld = eintrag.hallenfeld === anderer.hallenfeld;
+    const gleicheSparte = eintrag.sparte === anderer.sparte;
+    const gleicherTag = eintrag.datum === anderer.datum;
+
+    if (gleicherTag && gleicheZeit && gleichesFeld) {
+      if (!gleicheSparte) return "⚠ Unterschiedliche Sparten";
+      if (eintrag.funktion === "trainer" && anderer.funktion === "trainer") {
+        return "⚠ Zwei Trainer";
+      }
+    }
+  }
+  return null;
+};
+
+
   if (!isAdmin) {
     return <div className="p-6 text-center">Kein Zugriff ❌</div>;
   }
@@ -274,6 +302,7 @@ export default function AdminPage() {
                 <th>Aufbau</th>
                 <th>Trainer</th>
                 <th>Vergütung (€)</th>
+                <th>Konflikt</th>
                 <th>Aktion</th>
               </tr>
             </thead>
@@ -286,11 +315,19 @@ export default function AdminPage() {
   .map((e) => (
                 <tr key={e.id} className="border-b hover:bg-gray-50">
                   <td>{dayjs(e.datum).format("dddd")}</td>
-                  <td>{e.datum}</td>
+                  <td>{e.datum}</td><td className="text-red-600">
+  {findeKonflikt(e, entries)}
+</td>
                   <td>{e.sparte}</td>
-                  <td>{e.beginn}</td>
-                  <td>{e.ende}</td>
-                  <td>{e.hallenfeld}</td>
+                  <td>{e.beginn}</td><td className="text-red-600">
+  {findeKonflikt(e, entries)}
+</td>
+                  <td>{e.ende}</td><td className="text-red-600">
+  {findeKonflikt(e, entries)}
+</td>
+                  <td>{e.hallenfeld}</td><td className="text-red-600">
+  {findeKonflikt(e, entries)}
+</td>
                   <td>{e.funktion}</td>
                   <td>{e.aufbau ? "Ja" : "Nein"}</td>
                   <td>{e.trainername}</td>
