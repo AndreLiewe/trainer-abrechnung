@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 );
   // 4. Upload in Supabase Storage (Platzhalter, nur falls konfiguriert!)
   const fileName = `abrechnung-${trainername}-${monat}-${jahr}.pdf`;
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('abrechnungen') // dein Bucket-Name
     .upload(fileName, stream, {
       contentType: 'application/pdf',
