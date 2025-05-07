@@ -70,9 +70,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, url: pdfUrl });
 
-  } catch (err: any) {
-    console.error("Fehler in /api/erzeuge-abrechnung:", err);
-    return NextResponse.json({ error: err.message || "Unbekannter Fehler" }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Fehler in /api/erzeuge-abrechnung:", message);
+    return NextResponse.json({ error: message || "Unbekannter Fehler" }, { status: 500 });
   }
 }
 
