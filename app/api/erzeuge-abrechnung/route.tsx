@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabaseClient';
 import TrainerAbrechnungPDF from "../../../components/TrainerAbrechnungPDF";
 import { renderToStream } from '@react-pdf/renderer';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { trainername, monat, jahr } = await req.json();
