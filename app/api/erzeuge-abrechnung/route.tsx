@@ -73,10 +73,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, url: pdfUrl });
 
   } catch (err) {
-    console.error("Fehler in /api/erzeuge-abrechnung:", JSON.stringify(err, null, 2));
-    const message =
-      err instanceof Error ? err.message : typeof err === "string" ? err : "Unbekannter Fehler";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Fehler in /api/erzeuge-abrechnung:", err);
+  
+    let errorText = "Unbekannter Fehler";
+  
+    if (err instanceof Error) {
+      errorText = err.message;
+    } else if (typeof err === "string") {
+      errorText = err;
+    } else if (err && typeof err === "object") {
+      errorText = JSON.stringify(err);
+    }
+  
+    return NextResponse.json({ error: errorText }, { status: 500 });
   }
+  
 }
 
