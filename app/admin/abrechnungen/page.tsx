@@ -49,7 +49,22 @@ export default function AdminAbrechnungenPage() {
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
     );
   };
-
+  const [trainerList, setTrainerList] = useState<string[]>([]);
+  const [selectedTrainer, setSelectedTrainer] = useState("");
+  const [selectedMonat, setSelectedMonat] = useState<number>(new Date().getMonth() + 1);
+  const [selectedJahr, setSelectedJahr] = useState<number>(new Date().getFullYear());
+  
+  useEffect(() => {
+    const fetchTrainer = async () => {
+      const { data } = await supabase.from("trainer_profiles").select("name");
+      if (data) {
+        const namen = data.map((t) => t.name).filter(Boolean);
+        setTrainerList(namen);
+      }
+    };
+    fetchTrainer();
+  }, []);
+  
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">📄 Monatsabrechnungen</h1>
@@ -100,7 +115,63 @@ export default function AdminAbrechnungenPage() {
           </table>
         </CardContent>
       </Card>
+      <div className="mt-6 border-t pt-6">
+  <h2 className="text-lg font-semibold mb-4">Neue Abrechnung erstellen</h2>
+
+  <div className="flex flex-wrap gap-4 items-end">
+    <div className="w-40">
+      <label className="block text-sm mb-1">Trainer</label>
+      <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
+        <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+        <SelectContent>
+          {trainerList.map((name) => (
+            <SelectItem key={name} value={name}>{name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+    <div className="w-32">
+      <label className="block text-sm mb-1">Monat</label>
+      <Select value={selectedMonat.toString()} onValueChange={(v) => setSelectedMonat(Number(v))}>
+        <SelectTrigger><SelectValue placeholder="Monat" /></SelectTrigger>
+        <SelectContent>
+          {[...Array(12)].map((_, i) => (
+            <SelectItem key={i+1} value={(i+1).toString()}>{i+1}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+    <div className="w-32">
+      <label className="block text-sm mb-1">Jahr</label>
+      <Select value={selectedJahr.toString()} onValueChange={(v) => setSelectedJahr(Number(v))}>
+        <SelectTrigger><SelectValue placeholder="Jahr" /></SelectTrigger>
+        <SelectContent>
+          {[2024, 2025].map((year) => (
+            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+    <Button
+      onClick={() => {
+        if (!selectedTrainer) {
+          alert("Bitte Trainer auswählen");
+          return;
+        }
+        erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
+      }}
+    >
+      Abrechnung erstellen
+    </Button>
+  </div>
+</div>
+
     </div>
   );
 }
+<div className="mt-8 text-center">
+  <Button variant="ghost" onClick={() => window.history.back()}>
+    🔙 Zurück
+  </Button>
+</div>
 
