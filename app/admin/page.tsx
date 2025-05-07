@@ -387,9 +387,15 @@ export default function AdminPage() {
         <Button onClick={handleNewSubmit}>Eintrag speichern</Button>
       </div>
 
-      <div className="mt-8 text-center">
-        <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
-      </div>
+      <div className="mt-8 flex justify-center gap-4">
+  <Button variant="outline" onClick={() => router.push("/start")}>
+    🔙 Zur Startseite
+  </Button>
+  <Button variant="default" onClick={() => router.push("/admin/abrechnungen")}>
+    📄 Monatsabrechnungen
+  </Button>
+</div>
+
     </div>
   );
 }
