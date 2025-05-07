@@ -1,5 +1,13 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-
+type AbrechnungsEintrag = {
+    datum: string;
+    sparte: string;
+    beginn: string;
+    ende: string;
+    funktion: string;
+    aufbau: boolean;
+  };
+  
 const styles = StyleSheet.create({
   page: { padding: 20, fontSize: 12 },
   header: { fontSize: 16, marginBottom: 10 },
@@ -14,7 +22,7 @@ const TrainerAbrechnungPDF = ({
   monat,
   jahr,
 }: {
-  eintraege: any[];
+    eintraege: AbrechnungsEintrag[];
   trainername: string;
   monat: number;
   jahr: number;
