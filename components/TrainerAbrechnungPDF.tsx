@@ -57,4 +57,4 @@ const TrainerAbrechnungPDF = ({
   );
 };
 
-export { TrainerAbrechnungPDF };
+export default TrainerAbrechnungPDF;
