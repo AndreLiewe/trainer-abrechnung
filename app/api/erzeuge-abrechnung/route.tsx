@@ -6,17 +6,28 @@ import { renderToStream } from '@react-pdf/renderer';
 export async function POST(req: Request) {
   const { trainername, monat, jahr } = await req.json();
 
-  // 1. Hole Einträge für diesen Trainer + Monat
-  const { data: eintraege } = await supabase
+  // 🔐 1. Validierung der Eingabe
+  if (!trainername || !monat || !jahr) {
+    return NextResponse.json({ error: "Ungültige Eingabedaten." }, { status: 400 });
+  }
+
+  // 📦 2. Hole Einträge für diesen Trainer im Monat
+  const { data: eintraege, error: ladeFehler } = await supabase
     .from('abrechnungen')
     .select('*')
     .eq('trainername', trainername)
     .gte('datum', `${jahr}-${monat.toString().padStart(2, '0')}-01`)
     .lte('datum', `${jahr}-${monat.toString().padStart(2, '0')}-31`);
 
-  if (!eintraege) return NextResponse.json({ error: "Keine Daten" }, { status: 400 });
+  if (ladeFehler) {
+    return NextResponse.json({ error: "Fehler beim Laden der Einträge." }, { status: 500 });
+  }
 
-  // 2. Berechne Summe
+  if (!eintraege || eintraege.length === 0) {
+    return NextResponse.json({ error: "Keine Einträge gefunden." }, { status: 400 });
+  }
+
+  // 💰 3. Summe berechnen
   const summe = eintraege.reduce((sum, e) => {
     const [h1, m1] = e.beginn.split(':').map(Number);
     const [h2, m2] = e.ende.split(':').map(Number);
@@ -26,40 +37,47 @@ export async function POST(req: Request) {
     if (e.aufbau) stunden += 0.5;
     const satz = e.funktion === 'hilfstrainer' ? 10 : 20;
     return sum + stunden * satz;
-  }, 0).toFixed(2);
+  }, 0);
 
-  // 3. PDF generieren als Stream
+  // 🧾 4. PDF als Stream generieren
   const stream = await renderToStream(
     <TrainerAbrechnungPDF
-    eintraege={eintraege}
-    trainername={trainername}
-    monat={monat}
-    jahr={jahr}
-  />
-);
-  // 4. Upload in Supabase Storage (Platzhalter, nur falls konfiguriert!)
+      eintraege={eintraege}
+      trainername={trainername}
+      monat={monat}
+      jahr={jahr}
+    />
+  );
+
+  // 📤 5. Upload in Supabase Storage
   const fileName = `abrechnung-${trainername}-${monat}-${jahr}.pdf`;
-  const { error } = await supabase.storage
-    .from('abrechnungen') // dein Bucket-Name
+  const { error: uploadError } = await supabase.storage
+    .from('pdfs') // ✅ Bucket muss "pdfs" heißen!
     .upload(fileName, stream, {
       contentType: 'application/pdf',
       upsert: true,
     });
 
-  if (error) return NextResponse.json({ error: "Upload fehlgeschlagen" }, { status: 500 });
+  if (uploadError) {
+    return NextResponse.json({ error: "Upload fehlgeschlagen." }, { status: 500 });
+  }
 
-  const pdfUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/abrechnungen/${fileName}`;
+  const pdfUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdfs/${fileName}`;
 
-  // 5. Speichere in Tabelle
-  await supabase.from('monatsabrechnungen').insert({
+  // 💾 6. Speichere Abrechnungsdatensatz
+  const { error: insertError } = await supabase.from('monatsabrechnungen').insert({
     trainername,
     monat,
     jahr,
     status: 'erstellt',
-    summe,
+    summe: Number(summe.toFixed(2)),
     pdf_url: pdfUrl,
-    erstellt_am: new Date().toISOString()
+    erstellt_am: new Date().toISOString(),
   });
+
+  if (insertError) {
+    return NextResponse.json({ error: "Fehler beim Speichern der Abrechnung." }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true, url: pdfUrl });
 }
