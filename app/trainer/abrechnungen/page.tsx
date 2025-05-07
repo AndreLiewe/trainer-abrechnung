@@ -22,7 +22,7 @@ const MONATSNAMEN = [
 ];
 
 export default function MeineAbrechnungen() {
-    const [, setTrainerName] = useState("");
+    
 
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function MeineAbrechnungen() {
         return;
       }
 
-      setTrainerName(profile.name);
+      
 
       const { data, error } = await supabase
         .from("monatsabrechnungen")

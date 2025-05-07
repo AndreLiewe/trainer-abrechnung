@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 type Abrechnung = {
   id: string;
@@ -26,6 +27,21 @@ export default function AdminAbrechnungenPage() {
     };
     fetchAbrechnungen();
   }, []);
+  const erzeugePdf = async (trainername: string, monat: number, jahr: number) => {
+    const res = await fetch("/api/erzeuge-abrechnung", {
+      method: "POST",
+      body: JSON.stringify({ trainername, monat, jahr }),
+      headers: { "Content-Type": "application/json" },
+    });
+  
+    if (res.ok) {
+      alert("PDF erfolgreich erstellt ✅");
+      location.reload(); // aktualisiert Tabelle
+    } else {
+      alert("Fehler beim Erstellen der PDF ❌");
+    }
+  };
+  
 
   const updateStatus = async (id: string, newStatus: string) => {
     await supabase.from("monatsabrechnungen").update({ status: newStatus }).eq("id", id);
@@ -52,27 +68,34 @@ export default function AdminAbrechnungenPage() {
               </tr>
             </thead>
             <tbody>
-              {abrechnungen.map((a) => (
-                <tr key={a.id} className="border-b hover:bg-gray-50">
-                  <td>{a.trainername}</td>
-                  <td>{a.monat}</td>
-                  <td>{a.jahr}</td>
-                  <td>{a.summe.toFixed(2)}</td>
-                  <td>
-                    <Select value={a.status} onValueChange={(val) => updateStatus(a.id, val)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="offen">Offen</SelectItem>
-                        <SelectItem value="erstellt">Erstellt</SelectItem>
-                        <SelectItem value="bezahlt">Bezahlt</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td>
-                    <a href={a.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">PDF</a>
-                  </td>
-                </tr>
-              ))}
+            {abrechnungen.map((a) => (
+  <tr key={a.id} className="border-b hover:bg-gray-50">
+    <td>{a.trainername}</td>
+    <td>{a.monat}</td>
+    <td>{a.jahr}</td>
+    <td>{a.summe != null ? a.summe.toFixed(2) : "-"}</td>
+    <td>
+      <Select value={a.status} onValueChange={(val) => updateStatus(a.id, val)}>
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="offen">Offen</SelectItem>
+          <SelectItem value="erstellt">Erstellt</SelectItem>
+          <SelectItem value="bezahlt">Bezahlt</SelectItem>
+        </SelectContent>
+      </Select>
+    </td>
+    <td>
+      {a.pdf_url ? (
+        <a href={a.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">PDF</a>
+      ) : (
+        <Button variant="outline" size="sm" onClick={() => erzeugePdf(a.trainername, a.monat, a.jahr)}>
+          PDF erstellen
+        </Button>
+      )}
+    </td>
+  </tr>
+))}
+
             </tbody>
           </table>
         </CardContent>
