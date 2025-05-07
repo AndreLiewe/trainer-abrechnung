@@ -10,13 +10,15 @@ export async function POST(req: Request) {
     if (!trainername || !monat || !jahr) {
       return NextResponse.json({ error: "Ungültige Eingabedaten." }, { status: 400 });
     }
-
+    const letzterTag = new Date(jahr, monat, 0).getDate(); // z. B. 30 für April
+    const startDatum = `${jahr}-${monat.toString().padStart(2, '0')}-01`;
+    const endDatum = `${jahr}-${monat.toString().padStart(2, '0')}-${letzterTag}`;
     const { data: eintraege, error: ladeFehler } = await supabase
       .from('abrechnungen')
       .select('*')
       .eq('trainername', trainername)
-      .gte('datum', `${jahr}-${monat.toString().padStart(2, '0')}-01`)
-      .lte('datum', `${jahr}-${monat.toString().padStart(2, '0')}-31`);
+      .gte('datum', startDatum)
+.lte('datum', endDatum);
 
     if (ladeFehler) throw ladeFehler;
 
