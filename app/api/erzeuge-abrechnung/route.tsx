@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
-import { TrainerAbrechnungPDF } from '@/components/TrainerAbrechnungPDF';
+import { TrainerAbrechnungPDF } from "../../../components/TrainerAbrechnungPDF";
 import { renderToStream } from '@react-pdf/renderer';
 
 export async function POST(req: Request) {
