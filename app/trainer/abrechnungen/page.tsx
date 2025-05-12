@@ -26,6 +26,27 @@ export default function MeineAbrechnungen() {
 
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(true);
+  const freigeben = async (id: string) => {
+  const confirmed = confirm("Abrechnung jetzt freigeben?");
+  if (!confirmed) return;
+
+  const { error } = await supabase
+    .from("monatsabrechnungen")
+    .update({ status: "offen", freigabe_am: new Date().toISOString() })
+    .eq("id", id);
+
+  if (!error) {
+    toast.success("Abrechnung freigegeben ✅");
+    setAbrechnungen((prev) =>
+      prev.map((a) => a.id === id ? { ...a, status: "offen" } : a)
+    );
+  } else {
+    toast.error("Fehler beim Freigeben ❌");
+    console.error(error);
+  }
+};
+
+
 
   useEffect(() => {
     const fetchAbrechnungen = async () => {
@@ -86,6 +107,7 @@ export default function MeineAbrechnungen() {
                     <th className="p-2">Monat</th>
                     <th className="p-2">Jahr</th>
                     <th className="p-2">Status</th>
+                    <th className="p-2">Freigabe</th>
                     <th className="p-2">Download</th>
                   </tr>
                 </thead>
@@ -95,6 +117,14 @@ export default function MeineAbrechnungen() {
                       <td className="p-2">{MONATSNAMEN[eintrag.monat - 1]}</td>
                       <td className="p-2">{eintrag.jahr}</td>
                       <td className="p-2 capitalize">{eintrag.status}</td>
+                      {eintrag.status === "warten-auf-freigabe" && (
+  <td className="p-2">
+    <Button size="sm" className="text-xs px-2 py-1" onClick={() => freigeben(eintrag.id)}>
+      ✅ Freigeben?
+    </Button>
+  </td>
+)}
+
                       <td className="p-2">
                         {eintrag.pdf_url ? (
                           <a

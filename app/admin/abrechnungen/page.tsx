@@ -6,6 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import toast, { Toaster } from "react-hot-toast";
+import dayjs from "dayjs";
+import "dayjs/locale/de";
+dayjs.locale("de");
+
 
 interface Abrechnung {
   id: string;
@@ -16,6 +20,7 @@ interface Abrechnung {
   pdf_url: string;
   status: string;
   erstellt_am: string;
+  freigabe_am?: string;
 }
 
 export default function AdminAbrechnungenPage() {
@@ -140,6 +145,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
                 <th>Summe (€)</th>
                 <th>Status</th>
                 <th>PDF</th>
+                <th>Freigabe</th>
               </tr>
             </thead>
             <tbody>
@@ -169,6 +175,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
       <Button
         size="sm"
         variant="destructive"
+        className="text-xs px-2 py-1"
         onClick={() => resetAbrechnung(a.trainername, a.monat, a.jahr)}
       >
         Zurücksetzen
@@ -182,6 +189,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
 )}
 
                   </td>
+                  <td>{a.freigabe_am ? dayjs(a.freigabe_am).format("DD.MM.YYYY HH:mm") : "-"}</td>
                 </tr>
               ))}
             </tbody>
