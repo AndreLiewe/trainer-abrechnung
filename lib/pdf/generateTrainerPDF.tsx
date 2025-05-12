@@ -9,11 +9,10 @@ interface GeneratePDFProps {
 }
 
 export async function generateTrainerPDF({
-  eintraege,
   trainerName,
   monat,
   jahr,
-}: GeneratePDFProps): Promise<Buffer> {
+}: Omit<GeneratePDFProps, 'eintraege'>): Promise<Buffer> {
   const styles = StyleSheet.create({
     page: { padding: 40, fontSize: 12 },
   });
