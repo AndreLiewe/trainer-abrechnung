@@ -28,7 +28,7 @@ export async function generateTrainerPDF({
   const page = pdfDoc.addPage();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  const { width, height } = page.getSize();
+  const height = page.getSize().height;
   const margin = 50;
   let y = height - margin;
 
