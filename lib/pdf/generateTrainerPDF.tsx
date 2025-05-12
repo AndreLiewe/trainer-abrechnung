@@ -1,66 +1,54 @@
-// lib/generateTrainerPDF.ts
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { renderToBuffer } from '@react-pdf/renderer';
 
-type AbrechnungsEintrag = {
+interface Eintrag {
   datum: string;
   sparte: string;
-  beginn: string;
-  ende: string;
-  funktion: string;
-  aufbau: boolean;
-};
+  dauer: number;
+  stundensatz: number;
+}
 
-export async function generateTrainerPDF({
-  eintraege,
-  trainername,
-  monat,
-  jahr,
-}: {
-  eintraege: AbrechnungsEintrag[];
-  trainername: string;
-  monat: number;
-  jahr: number;
-}): Promise<Buffer> {
-  const styles = StyleSheet.create({
-    page: { padding: 20, fontSize: 12 },
-    header: { fontSize: 16, marginBottom: 10 },
-    row: { flexDirection: 'row', marginBottom: 5 },
-    col: { width: '20%' },
-  });
+interface PDFProps {
+  eintraege: Eintrag[];
+  trainerName: string;
+  monat: string;
+  jahr: string;
+}
 
-  const gesamt = eintraege.reduce((sum, e) => {
-    const [h1, m1] = e.beginn.split(':').map(Number);
-    const [h2, m2] = e.ende.split(':').map(Number);
-    let minuten = (h2 * 60 + m2) - (h1 * 60 + m1);
-    if (minuten < 0) minuten += 1440;
-    let stunden = minuten / 60;
-    if (e.aufbau) stunden += 0.5;
-    const satz = e.funktion === 'hilfstrainer' ? 10 : 20;
-    return sum + stunden * satz;
-  }, 0).toFixed(2);
+const styles = StyleSheet.create({
+  page: { padding: 40, fontSize: 12 },
+  heading: { fontSize: 18, marginBottom: 20 },
+  row: { flexDirection: 'row', marginBottom: 4 },
+  cell: { flex: 1, borderBottom: '1px solid #ccc' },
+  total: { marginTop: 20, fontSize: 14, fontWeight: 'bold' },
+});
 
-  const pdf = (
+export function TrainerPDF({ eintraege, trainerName, monat, jahr }: PDFProps) {
+  const gesamt = eintraege.reduce((sum, e) => sum + e.dauer * e.stundensatz, 0);
+
+  return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.header}>
-          Abrechnung für {trainername} ({monat}/{jahr})
-        </Text>
-        {eintraege.map((e, i) => (
-          <View key={i} style={styles.row}>
-            <Text style={styles.col}>{e.datum}</Text>
-            <Text style={styles.col}>{e.sparte}</Text>
-            <Text style={styles.col}>
-              {e.beginn}–{e.ende}
-            </Text>
-            <Text style={styles.col}>{e.funktion}</Text>
-            <Text style={styles.col}>{e.aufbau ? 'Ja' : 'Nein'}</Text>
-          </View>
-        ))}
-        <Text style={{ marginTop: 20 }}>Gesamtsumme: {gesamt} €</Text>
+      <Page style={styles.page}>
+        <Text style={styles.heading}>Abrechnung für {trainerName} ({monat}/{jahr})</Text>
+
+        <View>
+          {eintraege.map((eintrag, i) => (
+            <View style={styles.row} key={i}>
+              <Text style={styles.cell}>{eintrag.datum}</Text>
+              <Text style={styles.cell}>{eintrag.sparte}</Text>
+              <Text style={styles.cell}>{eintrag.dauer} Std</Text>
+              <Text style={styles.cell}>{eintrag.stundensatz.toFixed(2)} €</Text>
+              <Text style={styles.cell}>{(eintrag.dauer * eintrag.stundensatz).toFixed(2)} €</Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.total}>Gesamtsumme: {gesamt.toFixed(2)} €</Text>
       </Page>
     </Document>
   );
+}
 
-  return await renderToBuffer(pdf);
+export async function generateTrainerPDF(props: PDFProps): Promise<Buffer> {
+  return await renderToBuffer(<TrainerPDF {...props} />);
 }
