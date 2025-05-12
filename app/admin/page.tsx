@@ -107,7 +107,7 @@ export default function AdminPage() {
     const { data } = await supabase
       .from("monatsabrechnungen")
       .select("monat,jahr,trainername")
-      .eq("status", "erstellt");
+      .in("status", ["erstellt", "warten-auf-freigabe", "offen", "bezahlt"])
 
     if (data) {
       const keyset = new Set<string>(
