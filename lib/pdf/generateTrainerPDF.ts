@@ -52,7 +52,7 @@ export async function generateTrainerPDF({
   const colWidths = [40, 70, 100, 80, 80, 60, 80];
   const cols: number[] = [];
   let xPos = margin;
-  for (let w of colWidths) {
+  for (const w of colWidths) {
     cols.push(xPos);
     xPos += w;
   }
