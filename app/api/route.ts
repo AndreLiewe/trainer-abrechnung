@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   return new Response(JSON.stringify({ ok: true, message: "Die API funktioniert 🎉" }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
