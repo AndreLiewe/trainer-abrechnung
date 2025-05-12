@@ -31,45 +31,38 @@ export default function AdminAbrechnungenPage() {
   }, []);
 
   const erzeugePdf = async (trainername: string, monat: number, jahr: number) => {
-    setLoading(true);
-    toast.loading("PDF wird erstellt...", { id: "pdf" });
+  setLoading(true);
+  toast.loading("PDF wird erstellt...", { id: "pdf" });
 
-    const res = await fetch("/api/erzeuge-abrechnung", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trainername, monat, jahr }),
-    });
+  const res = await fetch("/api/erzeuge-abrechnung", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trainername, monat, jahr }),
+  });
 
-    toast.dismiss("pdf");
-    setLoading(false);
+  toast.dismiss("pdf");
+  setLoading(false);
 
-    if (res.ok) {
-  const { url }: { url: string } = await res.json();
-
-  if (!url) {
-    toast.error("PDF wurde erstellt, aber kein Link zurückgegeben");
-    return;
+  if (res.ok) {
+    const { url }: { url: string } = await res.json();
+    await supabase.from("monatsabrechnungen")
+      .update({ status: "erstellt", pdf_url: url })
+      .eq("trainername", trainername)
+      .eq("monat", monat)
+      .eq("jahr", jahr);
+    toast.success("PDF erfolgreich erstellt ✅");
+    location.reload();
+  } else {
+    let error: { error?: string; details?: string } = {};
+    try {
+      error = await res.json();
+    } catch {
+      error = { error: "Fehlerhafte Serverantwort" };
+    }
+    console.error("[API ERROR]", error);
+    toast.error("Fehler: " + (error.details || error.error || "Unbekannter Fehler"));
   }
-
-  await supabase.from("monatsabrechnungen")
-    .update({ status: "erstellt", pdf_url: url })
-    .eq("trainername", trainername)
-    .eq("monat", monat)
-    .eq("jahr", jahr);
-
-  toast.success("PDF erfolgreich erstellt ✅");
-  location.reload();
-
-} else {
-  let error: { error?: string; details?: string } = {};
-  try {
-    error = await res.json();
-  } catch {
-    error = { error: "Fehlerhafte Serverantwort" };
-  }
-  console.error("[API ERROR]", error);
-  toast.error("Fehler: " + (error.details || error.error || "Unbekannter Fehler"));
-}
+};
 
 
   const updateStatus = async (id: string, newStatus: string) => {
@@ -213,5 +206,4 @@ export default function AdminAbrechnungenPage() {
       </div>
     </div>
   );
-}
 }
