@@ -29,12 +29,11 @@ export async function generateTrainerPDF({
   jahr,
 }: PDFProps): Promise<Buffer> {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage();
+  const page = pdfDoc.addPage([842, 595]); // A4 quer
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontSize = 11;
-  const { height } = page.getSize();
+  const fontSize = 10;
   const margin = 40;
-  let y = height - margin;
+  let y = 545;
 
   const drawText = (text: string, x: number, y: number, size = fontSize) => {
     page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
@@ -44,53 +43,65 @@ export async function generateTrainerPDF({
   y -= 18;
   drawText("Bushido Sportverein Wahrsow e.V.", margin, y, 14);
   y -= 25;
-
   drawText(`Trainer: ${trainerName}`, margin, y);
   y -= 15;
   drawText(`Monat: ${monat} / ${jahr}`, margin, y);
   y -= 25;
 
   const headers = ["Tag", "Datum", "Sparte", "Zeit", "Funktion", "Aufbau", "Betrag"];
-  const cols = [margin, margin + 35, margin + 90, margin + 180, margin + 260, margin + 340, margin + 420];
-  const rowHeight = 16;
+  const colWidths = [40, 70, 100, 80, 80, 60, 80];
+  const cols = colWidths.reduce((acc, w, i) => {
+    acc.push((acc[i - 1] || margin) + (i > 0 ? colWidths[i - 1] : 0));
+    return acc;
+  }, [] as number[]);
+  const rowHeight = 20;
 
-  // Header
-  for (let i = 0; i < headers.length; i++) {
-    drawText(headers[i], cols[i], y, fontSize);
-  }
-  y -= rowHeight;
+  // Tabellenhintergrund
+  const startY = y;
+  let currentY = y - rowHeight;
 
   let summe = 0;
 
-  for (const e of eintraege) {
-    const tag = getWochentag(e.datum);
-    drawText(tag, cols[0], y);
-    drawText(e.datum, cols[1], y);
-    drawText(e.sparte, cols[2], y);
-    drawText(`${e.beginn}–${e.ende}`, cols[3], y);
-    drawText(e.funktion, cols[4], y);
-    drawText(e.aufbau ? "Ja" : "Nein", cols[5], y);
-    drawText(`${e.betrag.toFixed(2)} €`, cols[6], y);
-    y -= rowHeight;
-    summe += e.betrag;
+  const allRows = [headers, ...eintraege.map((e) => [
+    getWochentag(e.datum),
+    e.datum,
+    e.sparte,
+    `${e.beginn}–${e.ende}`,
+    e.funktion,
+    e.aufbau ? "Ja" : "Nein",
+    `${e.betrag.toFixed(2)} €`,
+  ])];
 
-    if (y < 60) break;
+  for (const row of allRows) {
+    row.forEach((cell, i) => {
+      const x = cols[i];
+      drawText(String(cell), x + 4, currentY + 5);
+    });
+
+    // horizontale Linie
+    page.drawLine({
+      start: { x: margin, y: currentY },
+      end: { x: margin + colWidths.reduce((a, b) => a + b, 0), y: currentY },
+      thickness: 0.5,
+      color: rgb(0, 0, 0),
+    });
+
+    currentY -= rowHeight;
   }
 
-  y -= 10;
-  drawText(`Gesamtsumme: ${summe.toFixed(2)} €`, margin, y, 12);
+  // vertikale Linien
+  for (let i = 0; i <= cols.length; i++) {
+    const x = i === 0 ? margin : cols[i];
+    page.drawLine({
+      start: { x, y: currentY + rowHeight },
+      end: { x, y: startY },
+      thickness: 0.5,
+      color: rgb(0, 0, 0),
+    });
+  }
 
-  // Rahmen (nur grob außen, kein Zellraster)
-  const tableTop = height - margin - 100;
-  const tableBottom = y + 5;
-  page.drawRectangle({
-    x: margin - 5,
-    y: tableBottom,
-    width: 500,
-    height: tableTop - tableBottom,
-    borderColor: rgb(0, 0, 0),
-    borderWidth: 1,
-  });
+  y = currentY - 20;
+  drawText(`Gesamtsumme: ${eintraege.reduce((s, e) => s + e.betrag, 0).toFixed(2)} €`, margin, y, 12);
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
