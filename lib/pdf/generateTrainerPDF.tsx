@@ -1,16 +1,19 @@
 import { Document, Page, Text, StyleSheet } from '@react-pdf/renderer';
 import { renderToBuffer } from '@react-pdf/renderer';
 
-export async function generateTrainerPDF({
-  trainerName,
-  monat,
-  jahr,
-}: {
-  eintraege: any[];
+interface GeneratePDFProps {
+  eintraege: []; // derzeit ignoriert, aber sauber getypt
   trainerName: string;
   monat: string;
   jahr: string;
-}): Promise<Buffer> {
+}
+
+export async function generateTrainerPDF({
+  eintraege,
+  trainerName,
+  monat,
+  jahr,
+}: GeneratePDFProps): Promise<Buffer> {
   const styles = StyleSheet.create({
     page: { padding: 40, fontSize: 12 },
   });

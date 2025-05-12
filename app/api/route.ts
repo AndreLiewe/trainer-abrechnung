@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 let pdfBuffer;
 try {
   pdfBuffer = await generateTrainerPDF({
-    eintraege: enriched,
+    eintraege: [],
     trainerName: trainername,
     monat: String(monat).padStart(2, '0'),
     jahr: String(jahr),
