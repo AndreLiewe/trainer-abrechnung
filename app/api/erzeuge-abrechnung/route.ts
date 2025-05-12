@@ -4,21 +4,10 @@ import { generateTrainerPDF } from "@/lib/pdf/generateTrainerPDF";
 
 export const dynamic = "force-dynamic";
 
-
-
-function berechneStunden(beginn: string, ende: string, aufbau: boolean): number {
-  const [h1, m1] = beginn.split(":").map(Number);
-  const [h2, m2] = ende.split(":").map(Number);
-  let minuten = (h2 * 60 + m2) - (h1 * 60 + m1);
-  if (minuten < 0) minuten += 1440;
-  let stunden = minuten / 60;
-  if (aufbau) stunden += 0.5;
-  return stunden;
-}
-
 export async function POST(req: Request) {
   try {
     const { trainername, monat, jahr } = await req.json();
+    console.log("[DEBUG] Eingangsdaten:", trainername, monat, jahr);
 
     const von = `${jahr}-${String(monat).padStart(2, "0")}-01`;
     const bis = `${jahr}-${String(monat + 1).padStart(2, "0")}-01`;
@@ -30,15 +19,28 @@ export async function POST(req: Request) {
       .gte("datum", von)
       .lt("datum", bis);
 
-    if (error || !eintraege || eintraege.length === 0) {
+    if (error) {
+      console.error("[SUPABASE-ERROR]", error.message);
+      return NextResponse.json({ error: "Fehler beim Laden der Einträge", details: error.message }, { status: 500 });
+    }
+
+    if (!eintraege || eintraege.length === 0) {
       return NextResponse.json({ error: "Keine Einträge gefunden" }, { status: 404 });
     }
 
     const enriched = eintraege.map((e) => {
-      const stunden = berechneStunden(e.beginn, e.ende, e.aufbau);
+      const [h1, m1] = e.beginn.split(":").map(Number);
+      const [h2, m2] = e.ende.split(":").map(Number);
+      const begMin = h1 * 60 + m1;
+      const endMin = h2 * 60 + m2;
+      const duration = (endMin - begMin + (endMin < begMin ? 1440 : 0)) / 60;
+      const stunden = duration + (e.aufbau ? 0.5 : 0);
       const satz = e.funktion === "hilfstrainer" ? 10 : (e.datum >= "2024-04-01" ? 20 : 25);
       return { ...e, betrag: stunden * satz };
     });
+
+    const summe = enriched.reduce((sum, e) => sum + e.betrag, 0);
+    console.log("[DEBUG] Summe berechnet:", summe);
 
     const pdfBuffer = await generateTrainerPDF({
       eintraege: enriched,
@@ -57,13 +59,14 @@ export async function POST(req: Request) {
       });
 
     if (uploadError) {
+      console.error("[UPLOAD-ERROR]", uploadError.message);
       return NextResponse.json({ error: "Upload fehlgeschlagen", details: uploadError.message }, { status: 500 });
     }
 
     const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdfs/${filename}`;
-    const summe = enriched.reduce((sum, e) => sum + e.betrag, 0);
+    console.log("[DEBUG] PDF URL:", publicUrl);
 
-    await supabaseAdmin.from("monatsabrechnungen").upsert([{
+    const { error: insertError } = await supabaseAdmin.from("monatsabrechnungen").upsert([{
       trainername,
       monat,
       jahr,
@@ -73,9 +76,15 @@ export async function POST(req: Request) {
       erstell_am: new Date().toISOString(),
     }]);
 
+    if (insertError) {
+      console.error("[UPSERT-ERROR]", insertError.message);
+      return NextResponse.json({ error: "Eintrag speichern fehlgeschlagen", details: insertError.message }, { status: 500 });
+    }
+
     return NextResponse.json({ url: publicUrl, summe });
+
   } catch (err: unknown) {
-    console.error("[API-ERROR]", err);
+    console.error("[UNEXPECTED ERROR]", err);
     return NextResponse.json(
       {
         error: "Fehler beim Erstellen der PDF",
