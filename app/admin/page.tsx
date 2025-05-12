@@ -351,9 +351,10 @@ export default function AdminPage() {
   return showAbgerechnete || !abgerechneteKeys.has(key);
 })
 .map((e) => {
-  const monat = new Date(e.datum).getMonth() + 1;
-  const jahr = new Date(e.datum).getFullYear();
-  const key = `${e.trainername}_${monat}_${jahr}`;
+  const datumObj = new Date(e.datum);
+const monat = datumObj.getUTCMonth() + 1;
+const jahr = datumObj.getUTCFullYear();
+const key = `${e.trainername}_${monat}_${jahr}`;
   const istAbgerechnet = abgerechneteKeys.has(key);
 
   return (
