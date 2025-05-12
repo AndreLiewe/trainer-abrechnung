@@ -370,9 +370,14 @@ export default function AdminPage() {
       <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
       <td className="text-red-600">{findeKonflikt(e, entries)}</td>
       <td className="space-x-2">
-        <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
-        <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
-      </td>
+  {!istAbgerechnet && (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
+      <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
+    </>
+  )}
+</td>
+
     </tr>
   );
 })}
