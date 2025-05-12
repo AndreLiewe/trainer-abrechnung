@@ -34,35 +34,44 @@ export default function AdminAbrechnungenPage() {
   setLoading(true);
   toast.loading("PDF wird erstellt...", { id: "pdf" });
 
-  const res = await fetch("/api/erzeuge-abrechnung", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ trainername, monat, jahr }),
-  });
+  try {
+    const res = await fetch("/api/erzeuge-abrechnung", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trainername, monat, jahr }),
+    });
 
-  toast.dismiss("pdf");
-  setLoading(false);
+    toast.dismiss("pdf");
+    setLoading(false);
 
-  if (res.ok) {
-    const { url }: { url: string } = await res.json();
+    if (!res.ok) {
+      throw new Error("Serverantwort war nicht OK");
+    }
+
+    const json = await res.json();
+
+    if (!json.url) {
+      throw new Error("Antwort enthält keine PDF-URL");
+    }
+
     await supabase.from("monatsabrechnungen")
-      .update({ status: "erstellt", pdf_url: url })
+      .update({ status: "erstellt", pdf_url: json.url })
       .eq("trainername", trainername)
       .eq("monat", monat)
       .eq("jahr", jahr);
+
     toast.success("PDF erfolgreich erstellt ✅");
     location.reload();
+
+  } catch (err: unknown) {
+  if (err instanceof Error) {
+    toast.error("Fehler: " + err.message);
   } else {
-    let error: { error?: string; details?: string } = {};
-    try {
-      error = await res.json();
-    } catch {
-      error = { error: "Fehlerhafte Serverantwort" };
-    }
-    console.error("[API ERROR]", error);
-    toast.error("Fehler: " + (error.details || error.error || "Unbekannter Fehler"));
+    toast.error("Unbekannter Fehler");
   }
+}
 };
+
 
 
   const updateStatus = async (id: string, newStatus: string) => {
