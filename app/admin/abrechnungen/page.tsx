@@ -162,6 +162,8 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
                         <SelectItem value="offen">Offen</SelectItem>
                         <SelectItem value="erstellt">Erstellt</SelectItem>
                         <SelectItem value="bezahlt">Bezahlt</SelectItem>
+                        <SelectItem value="warten-auf-freigabe">Warten auf Freigabe</SelectItem>
+
                       </SelectContent>
                     </Select>
                   </td>

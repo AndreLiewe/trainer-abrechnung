@@ -107,8 +107,8 @@ export default function MeineAbrechnungen() {
                     <th className="p-2">Monat</th>
                     <th className="p-2">Jahr</th>
                     <th className="p-2">Status</th>
-                    <th className="p-2">Freigabe</th>
                     <th className="p-2">Download</th>
+                    <th className="p-2">Freigabe</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,14 +117,6 @@ export default function MeineAbrechnungen() {
                       <td className="p-2">{MONATSNAMEN[eintrag.monat - 1]}</td>
                       <td className="p-2">{eintrag.jahr}</td>
                       <td className="p-2 capitalize">{eintrag.status}</td>
-                      {eintrag.status === "warten-auf-freigabe" && (
-  <td className="p-2">
-    <Button size="sm" className="text-xs px-2 py-1" onClick={() => freigeben(eintrag.id)}>
-      ✅ Freigeben?
-    </Button>
-  </td>
-)}
-
                       <td className="p-2">
                         {eintrag.pdf_url ? (
                           <a
@@ -139,6 +131,13 @@ export default function MeineAbrechnungen() {
                           <span className="text-gray-400 italic">Noch nicht verfügbar</span>
                         )}
                       </td>
+                      {eintrag.status === "warten-auf-freigabe" && (
+  <td className="p-2">
+    <Button size="sm" className="text-xs px-2 py-1" onClick={() => freigeben(eintrag.id)}>
+      ✅ Freigeben?
+    </Button>
+  </td>
+)}
                     </tr>
                   ))}
                 </tbody>
