@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateTrainerPDF } from '@/lib/pdf/generateTrainerPDF';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 interface PDFRequest {
   trainername: string;
@@ -22,7 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ungültige Daten' }, { status: 400 });
     }
 
-    const { data: eintraege, error: fetchError } = await supabase
+    const { data: eintraege, error: fetchError } = await supabaseAdmin
       .from('zeit_erfassungen')
       .select('datum, sparte, dauer, stundensatz')
       .eq('trainername', trainername)
@@ -41,7 +36,7 @@ export async function POST(req: Request) {
     });
 
     const filename = `abrechnung-${trainername}-${monat}-${jahr}.pdf`;
-    const { error: uploadError } = await supabase.storage.from('pdfs').upload(filename, buffer, {
+    const { error: uploadError } = await supabaseAdmin.storage.from('pdfs').upload(filename, buffer, {
       contentType: 'application/pdf',
       upsert: true,
     });
