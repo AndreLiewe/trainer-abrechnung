@@ -71,6 +71,33 @@ export default function AdminAbrechnungenPage() {
   }
 }
 };
+const resetAbrechnung = async (trainername: string, monat: number, jahr: number) => {
+  const confirmed = confirm("Abrechnung wirklich zurücksetzen und PDF löschen?");
+  if (!confirmed) return;
+
+  const { data } = await supabase
+    .from("monatsabrechnungen")
+    .select("pdf_url")
+    .eq("trainername", trainername)
+    .eq("monat", monat)
+    .eq("jahr", jahr)
+    .single();
+
+  if (data?.pdf_url) {
+    const filename = data.pdf_url.split("/").pop();
+    await supabase.storage.from("pdfs").remove([filename]);
+  }
+
+  await supabase
+    .from("monatsabrechnungen")
+    .delete()
+    .eq("trainername", trainername)
+    .eq("monat", monat)
+    .eq("jahr", jahr);
+
+  toast.success("Abrechnung zurückgesetzt 🔁");
+  location.reload();
+};
 
 
 
@@ -134,18 +161,26 @@ export default function AdminAbrechnungenPage() {
                   </td>
                   <td>
                     {a.pdf_url ? (
-                      <a href={a.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">PDF</a>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={loading}
-                        onClick={() => erzeugePdf(a.trainername, a.monat, a.jahr)}
-                      >
-                        {loading ? "Wird erstellt..." : "PDF erstellen"}
-                      </Button>
-                    )}
+  <div className="space-y-1">
+    <a href={a.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 underline block">
+      PDF
+    </a>
+    {a.status === "erstellt" && (
+      <Button
+        size="sm"
+        variant="destructive"
+        onClick={() => resetAbrechnung(a.trainername, a.monat, a.jahr)}
+      >
+        Zurücksetzen
+      </Button>
+    )}
+  </div>
+) : (
+  <Button variant="outline" size="sm" onClick={() => erzeugePdf(a.trainername, a.monat, a.jahr)} disabled={loading}>
+    {loading ? "Wird erstellt..." : "PDF erstellen"}
+  </Button>
+)}
+
                   </td>
                 </tr>
               ))}
