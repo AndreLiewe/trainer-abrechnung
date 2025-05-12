@@ -50,13 +50,14 @@ export async function generateTrainerPDF({
 
   const headers = ["Tag", "Datum", "Sparte", "Zeit", "Funktion", "Aufbau", "Betrag"];
   const colWidths = [40, 70, 100, 80, 80, 60, 80];
-  const cols = colWidths.reduce((acc, w, i) => {
-    acc.push((acc[i - 1] || margin) + (i > 0 ? colWidths[i - 1] : 0));
-    return acc;
-  }, [] as number[]);
-  const rowHeight = 20;
+  const cols: number[] = [];
+  let xPos = margin;
+  for (let w of colWidths) {
+    cols.push(xPos);
+    xPos += w;
+  }
 
-  // Tabellenhintergrund
+  const rowHeight = 20;
   const startY = y;
   let currentY = y - rowHeight;
 
@@ -73,13 +74,15 @@ export async function generateTrainerPDF({
   for (const row of allRows) {
     row.forEach((cell, i) => {
       const x = cols[i];
-      drawText(String(cell), x + 4, currentY + 5);
+      if (typeof x === "number") {
+        drawText(String(cell), x + 4, currentY + 5);
+      }
     });
 
     // horizontale Linie
     page.drawLine({
       start: { x: margin, y: currentY },
-      end: { x: margin + colWidths.reduce((a, b) => a + b, 0), y: currentY },
+      end: { x: xPos, y: currentY },
       thickness: 0.5,
       color: rgb(0, 0, 0),
     });
@@ -88,8 +91,8 @@ export async function generateTrainerPDF({
   }
 
   // vertikale Linien
-  for (let i = 0; i <= cols.length; i++) {
-    const x = i === 0 ? margin : cols[i];
+  for (let i = 0; i < cols.length; i++) {
+    const x = cols[i];
     page.drawLine({
       start: { x, y: currentY + rowHeight },
       end: { x, y: startY },
@@ -98,8 +101,17 @@ export async function generateTrainerPDF({
     });
   }
 
+  // rechte Außenkante
+  page.drawLine({
+    start: { x: xPos, y: currentY + rowHeight },
+    end: { x: xPos, y: startY },
+    thickness: 0.5,
+    color: rgb(0, 0, 0),
+  });
+
   y = currentY - 20;
-  drawText(`Gesamtsumme: ${eintraege.reduce((s, e) => s + e.betrag, 0).toFixed(2)} €`, margin, y, 12);
+  const gesamt = eintraege.reduce((s, e) => s + e.betrag, 0).toFixed(2);
+  drawText(`Gesamtsumme: ${gesamt} €`, margin, y, 12);
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
