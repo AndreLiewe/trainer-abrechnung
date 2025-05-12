@@ -85,11 +85,13 @@ export async function POST(req: Request) {
       erstell_am: new Date().toISOString(),
     }]);
 
-    return NextResponse.json({ url: publicUrl, summe });
   } catch (err: unknown) {
-    return NextResponse.json(
-      { error: 'Fehler beim Erstellen der PDF', details: String(err) },
-      { status: 500 }
-    );
-  }
-}
+  console.error('[PDF] Fehler beim Generieren:', err);
+  return NextResponse.json(
+    {
+      error: 'Fehler beim Erstellen der PDF',
+      details: err instanceof Error ? err.message : String(err),
+    },
+    { status: 500 }
+  );
+}}
