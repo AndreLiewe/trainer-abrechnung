@@ -60,8 +60,6 @@ export async function generateTrainerPDF({
   const startY = y;
   let currentY = y - rowHeight;
 
-  let summe = 0;
-
   const allRows = [headers, ...eintraege.map((e) => [
     getWochentag(e.datum),
     e.datum,
