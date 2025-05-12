@@ -50,12 +50,17 @@ export async function POST(req: Request) {
       return { ...e, betrag: stunden * satz };
     });
 
-    const pdfBuffer = await generateTrainerPDF({
-      eintraege: enriched,
-      trainerName: trainername,
-      monat: String(monat).padStart(2, '0'),
-      jahr: String(jahr),
-    });
+let pdfBuffer;
+try {
+  pdfBuffer = await generateTrainerPDF({
+    eintraege: enriched,
+    trainerName: trainername,
+    monat: String(monat).padStart(2, '0'),
+    jahr: String(jahr),
+  });
+} catch (err) {
+  return NextResponse.json({ error: 'Fehler beim Erstellen der PDF', details: String(err) }, { status: 500 });
+}
 
     const filename = `abrechnung-${trainername}-${monat}-${jahr}.pdf`;
 

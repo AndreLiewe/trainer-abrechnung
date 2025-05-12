@@ -1,5 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { renderToBuffer } from '@react-pdf/renderer';
+console.log('[PDF] Starte PDF-Erzeugung...');
+
 
 interface AbrechnungsEintrag {
   datum: string;
@@ -53,6 +55,13 @@ export async function generateTrainerPDF({
       </Page>
     </Document>
   );
+console.log('[PDF] Daten für PDF:', JSON.stringify(eintraege, null, 2));
+console.log('[PDF] Monat/Jahr:', monat, jahr);
 
+ try {
   return await renderToBuffer(TrainerPDF);
-}
+} catch (err) {
+  console.error('[PDF] Fehler beim rendern:', err);
+  throw new Error('PDF konnte nicht erzeugt werden.');
+}}
+
