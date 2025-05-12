@@ -1,6 +1,9 @@
+// app/api/erzeuge-abrechnung/route.ts
 import { NextResponse } from 'next/server';
 import { generateTrainerPDF } from '@/lib/pdf/generateTrainerPDF';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+
+export const dynamic = 'force-dynamic'; // notwendig für Vercel
 
 interface PDFRequest {
   trainername: string;
@@ -17,6 +20,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ungültige Daten' }, { status: 400 });
     }
 
+    // Einträge laden
     const { data: eintraege, error: fetchError } = await supabaseAdmin
       .from('zeit_erfassungen')
       .select('datum, sparte, dauer, stundensatz')
@@ -28,6 +32,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Keine Einträge gefunden' }, { status: 404 });
     }
 
+    // Summe berechnen
+    const summe = eintraege.reduce((sum, e) => sum + e.dauer * e.stundensatz, 0);
+
+    // PDF erzeugen
     const buffer = await generateTrainerPDF({
       eintraege,
       trainerName: trainername,
@@ -36,18 +44,45 @@ export async function POST(req: Request) {
     });
 
     const filename = `abrechnung-${trainername}-${monat}-${jahr}.pdf`;
-    const { error: uploadError } = await supabaseAdmin.storage.from('pdfs').upload(filename, buffer, {
-      contentType: 'application/pdf',
-      upsert: true,
-    });
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('pdfs')
+      .upload(filename, buffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
 
     if (uploadError) {
-      return NextResponse.json({ error: 'Upload fehlgeschlagen', details: uploadError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Upload fehlgeschlagen', details: uploadError.message },
+        { status: 500 }
+      );
     }
 
     const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdfs/${filename}`;
 
-    return NextResponse.json({ url: publicUrl });
+    // In monatsabrechnungen einfügen
+    const { error: insertError } = await supabaseAdmin
+      .from('monatsabrechnungen')
+      .insert([
+        {
+          trainername,
+          monat,
+          jahr,
+          status: 'erstellt',
+          pdf_url: publicUrl,
+          summe,
+          erstell_am: new Date().toISOString(),
+        },
+      ]);
+
+    if (insertError) {
+      return NextResponse.json(
+        { error: 'Speichern in Datenbank fehlgeschlagen', details: insertError.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ url: publicUrl, summe });
   } catch (err: unknown) {
     if (err instanceof Error) {
       return NextResponse.json({ error: 'Serverfehler', details: err.message }, { status: 500 });
