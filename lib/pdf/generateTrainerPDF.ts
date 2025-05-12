@@ -1,5 +1,4 @@
-// lib/pdf/generateTrainerPDF.ts
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 interface AbrechnungsEintrag {
   datum: string;
@@ -18,6 +17,11 @@ interface PDFProps {
   jahr: string;
 }
 
+function getWochentag(datumStr: string) {
+  const tage = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  return tage[new Date(datumStr).getDay()];
+}
+
 export async function generateTrainerPDF({
   eintraege,
   trainerName,
@@ -27,51 +31,66 @@ export async function generateTrainerPDF({
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-  const height = page.getSize().height;
-  const margin = 50;
+  const fontSize = 11;
+  const { height } = page.getSize();
+  const margin = 40;
   let y = height - margin;
 
-  const drawText = (text: string, x: number, y: number, size = 12) => {
+  const drawText = (text: string, x: number, y: number, size = fontSize) => {
     page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
   };
 
-  drawText(`Abrechnung für ${trainerName} (${monat}/${jahr})`, margin, y, 16);
-  y -= 30;
+  drawText("Abrechnung Aufwandsentschädigung", margin, y, 14);
+  y -= 18;
+  drawText("Bushido Sportverein Wahrsow e.V.", margin, y, 14);
+  y -= 25;
 
-  drawText(`Datum`, margin + 0, y);
-  drawText(`Sparte`, margin + 80, y);
-  drawText(`Zeit`, margin + 180, y);
-  drawText(`Funktion`, margin + 280, y);
-  drawText(`Aufbau`, margin + 380, y);
-  drawText(`Betrag`, margin + 460, y);
-  y -= 20;
+  drawText(`Trainer: ${trainerName}`, margin, y);
+  y -= 15;
+  drawText(`Monat: ${monat} / ${jahr}`, margin, y);
+  y -= 25;
+
+  const headers = ["Tag", "Datum", "Sparte", "Zeit", "Funktion", "Aufbau", "Betrag"];
+  const cols = [margin, margin + 35, margin + 90, margin + 180, margin + 260, margin + 340, margin + 420];
+  const rowHeight = 16;
+
+  // Header
+  for (let i = 0; i < headers.length; i++) {
+    drawText(headers[i], cols[i], y, fontSize);
+  }
+  y -= rowHeight;
 
   let summe = 0;
-  for (const eintrag of eintraege) {
-    const zeile = [
-      eintrag.datum,
-      eintrag.sparte,
-      `${eintrag.beginn}–${eintrag.ende}`,
-      eintrag.funktion,
-      eintrag.aufbau ? 'Ja' : 'Nein',
-      `${eintrag.betrag.toFixed(2)} €`,
-    ];
 
-    drawText(zeile[0], margin + 0, y);
-    drawText(zeile[1], margin + 80, y);
-    drawText(zeile[2], margin + 180, y);
-    drawText(zeile[3], margin + 280, y);
-    drawText(zeile[4], margin + 380, y);
-    drawText(zeile[5], margin + 460, y);
-    y -= 18;
+  for (const e of eintraege) {
+    const tag = getWochentag(e.datum);
+    drawText(tag, cols[0], y);
+    drawText(e.datum, cols[1], y);
+    drawText(e.sparte, cols[2], y);
+    drawText(`${e.beginn}–${e.ende}`, cols[3], y);
+    drawText(e.funktion, cols[4], y);
+    drawText(e.aufbau ? "Ja" : "Nein", cols[5], y);
+    drawText(`${e.betrag.toFixed(2)} €`, cols[6], y);
+    y -= rowHeight;
+    summe += e.betrag;
 
-    summe += eintrag.betrag;
-    if (y < 80) break; // keine Seitenumbrüche – für ersten Test reicht das
+    if (y < 60) break;
   }
 
   y -= 10;
-  drawText(`Gesamtsumme: ${summe.toFixed(2)} €`, margin, y, 14);
+  drawText(`Gesamtsumme: ${summe.toFixed(2)} €`, margin, y, 12);
+
+  // Rahmen (nur grob außen, kein Zellraster)
+  const tableTop = height - margin - 100;
+  const tableBottom = y + 5;
+  page.drawRectangle({
+    x: margin - 5,
+    y: tableBottom,
+    width: 500,
+    height: tableTop - tableBottom,
+    borderColor: rgb(0, 0, 0),
+    borderWidth: 1,
+  });
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
