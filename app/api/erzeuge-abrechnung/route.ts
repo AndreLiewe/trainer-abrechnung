@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdfs/${filename}`;
     const summe = enriched.reduce((sum, e) => sum + e.betrag, 0);
 
-    await supabaseAdmin.from("monatsabrechnungen").insert([{
+    await supabaseAdmin.from("monatsabrechnungen").upsert([{
       trainername,
       monat,
       jahr,
