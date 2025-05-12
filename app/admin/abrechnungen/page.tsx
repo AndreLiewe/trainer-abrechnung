@@ -168,13 +168,16 @@ export default function AdminAbrechnungenPage() {
             </Select>
           </div>
           <Button
-            onClick={() => {
-              if (!selectedTrainer) {
-                toast.error("Bitte Trainer auswählen");
-                return;
-              }
-              erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
-            }}
+          type="button" // ← NICHT "submit"!
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+  if (!selectedTrainer) {
+    toast.error("Bitte Trainer auswählen");
+    return;
+  }
+  erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
+}}
+
             disabled={loading}
           >
             {loading ? "Wird erstellt..." : "Abrechnung erstellen"}
