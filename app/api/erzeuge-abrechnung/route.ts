@@ -4,14 +4,7 @@ import { generateTrainerPDF } from "@/lib/pdf/generateTrainerPDF";
 
 export const dynamic = "force-dynamic";
 
-interface AbrechnungsEintrag {
-  datum: string;
-  sparte: string;
-  beginn: string;
-  ende: string;
-  funktion: string;
-  aufbau: boolean;
-}
+
 
 function berechneStunden(beginn: string, ende: string, aufbau: boolean): number {
   const [h1, m1] = beginn.split(":").map(Number);
