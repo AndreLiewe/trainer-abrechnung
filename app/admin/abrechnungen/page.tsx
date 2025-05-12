@@ -33,10 +33,11 @@ export default function AdminAbrechnungenPage() {
   const erzeugePdf = async (trainername: string, monat: number, jahr: number) => {
     setLoading(true);
     toast.loading("PDF wird erstellt...", { id: "pdf" });
+
     const res = await fetch("/api/erzeuge-abrechnung", {
       method: "POST",
-      body: JSON.stringify({ trainername, monat, jahr }),
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trainername, monat, jahr }),
     });
 
     toast.dismiss("pdf");
@@ -52,7 +53,8 @@ export default function AdminAbrechnungenPage() {
       toast.success("PDF erfolgreich erstellt ✅");
       location.reload();
     } else {
-      toast.error("Fehler beim Erstellen der PDF ❌");
+      const error = await res.json();
+      toast.error("Fehler: " + (error?.details || "PDF konnte nicht erstellt werden"));
     }
   };
 
@@ -118,7 +120,13 @@ export default function AdminAbrechnungenPage() {
                     {a.pdf_url ? (
                       <a href={a.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">PDF</a>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => erzeugePdf(a.trainername, a.monat, a.jahr)} disabled={loading}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={loading}
+                        onClick={() => erzeugePdf(a.trainername, a.monat, a.jahr)}
+                      >
                         {loading ? "Wird erstellt..." : "PDF erstellen"}
                       </Button>
                     )}
@@ -151,7 +159,7 @@ export default function AdminAbrechnungenPage() {
               <SelectTrigger><SelectValue placeholder="Monat" /></SelectTrigger>
               <SelectContent>
                 {[...Array(12)].map((_, i) => (
-                  <SelectItem key={i+1} value={(i+1).toString()}>{i+1}</SelectItem>
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -168,16 +176,15 @@ export default function AdminAbrechnungenPage() {
             </Select>
           </div>
           <Button
-          type="button" // ← NICHT "submit"!
+            type="button"
             onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-  e.preventDefault();
-  if (!selectedTrainer) {
-    toast.error("Bitte Trainer auswählen");
-    return;
-  }
-  erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
-}}
-
+              e.preventDefault();
+              if (!selectedTrainer) {
+                toast.error("Bitte Trainer auswählen");
+                return;
+              }
+              erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
+            }}
             disabled={loading}
           >
             {loading ? "Wird erstellt..." : "Abrechnung erstellen"}
