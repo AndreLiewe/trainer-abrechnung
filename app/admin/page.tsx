@@ -35,6 +35,9 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [editEntry, setEditEntry] = useState<Abrechnung | null>(null);
   const [sortAscending, setSortAscending] = useState(true);
+  const [showAbgerechnete, setShowAbgerechnete] = useState(false);
+  const [abgerechneteKeys, setAbgerechneteKeys] = useState<Set<string>>(new Set());
+
   const [newEntry, setNewEntry] = useState({
     datum: "",
     sparte: "",
@@ -46,7 +49,7 @@ export default function AdminPage() {
     trainername: ""
   });
   const router = useRouter();
-
+  
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -97,6 +100,24 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin) fetchData();
   }, [fetchData, isAdmin]);
+
+
+  useEffect(() => {
+  const ladeAbgerechnete = async () => {
+    const { data } = await supabase
+      .from("monatsabrechnungen")
+      .select("monat,jahr,trainername")
+      .eq("status", "erstellt");
+
+    if (data) {
+      const keyset = new Set<string>(
+        data.map((a) => `${a.trainername}_${a.monat}_${a.jahr}`)
+      );
+      setAbgerechneteKeys(keyset);
+    }
+  };
+  if (isAdmin) ladeAbgerechnete();
+}, [isAdmin]);
 
   const handleDelete = async (id: string) => {
     const confirmed = confirm("Wirklich löschen?");
@@ -269,6 +290,17 @@ export default function AdminPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="mb-4">
+  <label className="inline-flex items-center gap-2">
+    <input
+      type="checkbox"
+      checked={showAbgerechnete}
+      onChange={() => setShowAbgerechnete((v) => !v)}
+    />
+    <span>Auch bereits abgerechnete Einträge anzeigen</span>
+  </label>
+</div>
+
         <div>
           <Label>Trainer</Label>
           <Select value={filterTrainer} onValueChange={setFilterTrainer}>
@@ -309,28 +341,42 @@ export default function AdminPage() {
             <tbody>
               {[...entries]
   .sort((a, b) => sortAscending
-    ? a.datum.localeCompare(b.datum)
-    : b.datum.localeCompare(a.datum)
-  )
-  .map((e) => (
-                <tr key={e.id} className="border-b hover:bg-gray-50">
-                  <td>{dayjs(e.datum).format("dddd")}</td>
-                  <td>{e.datum}</td>
-                  <td>{e.sparte}</td>
-                  <td>{e.beginn}</td>
-                  <td>{e.ende}</td>
-                  <td>{e.hallenfeld}</td>     
-                  <td>{e.funktion}</td>
-                  <td>{e.aufbau ? "Ja" : "Nein"}</td>
-                  <td>{e.trainername}</td>
-                  <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
-                  <td className="text-red-600">{findeKonflikt(e, entries)}</td>
-                  <td className="space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
-                  </td>
-                </tr>
-              ))}
+  ? a.datum.localeCompare(b.datum)
+  : b.datum.localeCompare(a.datum)
+)
+.filter((e) => {
+  const monat = new Date(e.datum).getMonth() + 1;
+  const jahr = new Date(e.datum).getFullYear();
+  const key = `${e.trainername}_${monat}_${jahr}`;
+  return showAbgerechnete || !abgerechneteKeys.has(key);
+})
+.map((e) => {
+  const monat = new Date(e.datum).getMonth() + 1;
+  const jahr = new Date(e.datum).getFullYear();
+  const key = `${e.trainername}_${monat}_${jahr}`;
+  const istAbgerechnet = abgerechneteKeys.has(key);
+
+  return (
+    <tr key={e.id} className={`border-b hover:bg-gray-50 ${istAbgerechnet ? "bg-yellow-50" : ""}`}>
+      <td>{dayjs(e.datum).format("dddd")}</td>
+      <td>{e.datum}</td>
+      <td>{e.sparte}</td>
+      <td>{e.beginn}</td>
+      <td>{e.ende}</td>
+      <td>{e.hallenfeld}</td>     
+      <td>{e.funktion}</td>
+      <td>{e.aufbau ? "Ja" : "Nein"}</td>
+      <td>{e.trainername}</td>
+      <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
+      <td className="text-red-600">{findeKonflikt(e, entries)}</td>
+      <td className="space-x-2">
+        <Button size="sm" variant="outline" onClick={() => setEditEntry(e)}>Bearbeiten</Button>
+        <Button size="sm" variant="destructive" onClick={() => handleDelete(e.id)}>Löschen</Button>
+      </td>
+    </tr>
+  );
+})}
+
             </tbody>
           </table>
         </CardContent>

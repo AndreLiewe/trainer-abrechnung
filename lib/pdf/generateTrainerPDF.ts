@@ -49,7 +49,7 @@ export async function generateTrainerPDF({
   y -= 25;
 
   const headers = ["Tag", "Datum", "Sparte", "Zeit", "Funktion", "Aufbau", "Betrag"];
-  const colWidths = [40, 70, 100, 100, 80, 60, 80];
+  const colWidths = [40, 70, 100, 120, 80, 60, 80];
   const cols: number[] = [];
   let xPos = margin;
   for (const w of colWidths) {
@@ -60,7 +60,8 @@ export async function generateTrainerPDF({
   const rowHeight = 20;
   const startY = y;
   let currentY = y - rowHeight;
-page.drawLine({
+
+  page.drawLine({
   start: { x: margin, y: startY },
   end: { x: xPos, y: startY },
   thickness: 0.5,
