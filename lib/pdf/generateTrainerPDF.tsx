@@ -1,17 +1,28 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { renderToBuffer } from '@react-pdf/renderer';
 
+interface AbrechnungsEintrag {
+  datum: string;
+  sparte: string;
+  beginn: string;
+  ende: string;
+  funktion: string;
+  aufbau: boolean;
+  betrag: number;
+}
+
 export async function generateTrainerPDF({
   eintraege,
   trainerName,
   monat,
   jahr,
 }: {
-  eintraege: any[];
+  eintraege: AbrechnungsEintrag[];
   trainerName: string;
   monat: string;
   jahr: string;
 }): Promise<Buffer> {
+
   const styles = StyleSheet.create({
     page: { padding: 40, fontSize: 12 },
     heading: { fontSize: 18, marginBottom: 20 },
