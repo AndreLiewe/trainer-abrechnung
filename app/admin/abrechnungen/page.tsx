@@ -44,19 +44,33 @@ export default function AdminAbrechnungenPage() {
     setLoading(false);
 
     if (res.ok) {
-      const { url }: { url: string } = await res.json();
-      await supabase.from("monatsabrechnungen")
-        .update({ status: "erstellt", pdf_url: url })
-        .eq("trainername", trainername)
-        .eq("monat", monat)
-        .eq("jahr", jahr);
-      toast.success("PDF erfolgreich erstellt ✅");
-      location.reload();
-    } else {
-      const error = await res.json();
-      toast.error("Fehler: " + (error?.details || "PDF konnte nicht erstellt werden"));
-    }
-  };
+  const { url }: { url: string } = await res.json();
+
+  if (!url) {
+    toast.error("PDF wurde erstellt, aber kein Link zurückgegeben");
+    return;
+  }
+
+  await supabase.from("monatsabrechnungen")
+    .update({ status: "erstellt", pdf_url: url })
+    .eq("trainername", trainername)
+    .eq("monat", monat)
+    .eq("jahr", jahr);
+
+  toast.success("PDF erfolgreich erstellt ✅");
+  location.reload();
+
+} else {
+  let error: { error?: string; details?: string } = {};
+  try {
+    error = await res.json();
+  } catch {
+    error = { error: "Fehlerhafte Serverantwort" };
+  }
+  console.error("[API ERROR]", error);
+  toast.error("Fehler: " + (error.details || error.error || "Unbekannter Fehler"));
+}
+
 
   const updateStatus = async (id: string, newStatus: string) => {
     await supabase.from("monatsabrechnungen").update({ status: newStatus }).eq("id", id);
@@ -199,4 +213,5 @@ export default function AdminAbrechnungenPage() {
       </div>
     </div>
   );
+}
 }
