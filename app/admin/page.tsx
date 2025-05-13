@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -258,7 +257,9 @@ export default function AdminPage() {
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={() => setEditEntry(null)}>Abbrechen</Button>
         <Button onClick={async () => {
-          const { error } = await supabase.from("abrechnungen").update(editEntry).eq("id", editEntry.id);
+          const { error } = await supabase.from("abrechnungen")
+            .update({ ...editEntry, funktion: capitalize(editEntry.funktion) })
+            .eq("id", editEntry.id);
           if (!error) {
             setEditEntry(null);
             fetchData();
