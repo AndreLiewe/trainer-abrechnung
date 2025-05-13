@@ -49,7 +49,7 @@ export async function generateTrainerPDF({
   y -= 25;
 
   const headers = ["Tag", "Datum", "Sparte", "Zeit", "Funktion", "Aufbau", "Betrag"];
-  const colWidths = [40, 70, 100, 120, 80, 60, 80];
+  const colWidths = [40, 70, 130, 120, 70, 60, 70];
   const cols: number[] = [];
   let xPos = margin;
   for (const w of colWidths) {
