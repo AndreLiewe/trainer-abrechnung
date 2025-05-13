@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { capitalize } from "@/lib/utils/capitalize";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -105,7 +106,7 @@ export default function TrainerAbrechnung() {
       ende: selectedEntry.ende,
       hallenfeld: selectedEntry.hallenfeld,
       aufbau: selectedEntry.aufbau,
-      funktion: selectedEntry.funktion,
+      funktion: capitalize(selectedEntry.funktion),
     }).eq("id", selectedEntry.id);
     if (error) {
       toast.error("Fehler beim Aktualisieren");
@@ -139,7 +140,7 @@ export default function TrainerAbrechnung() {
         ende,
         hallenfeld,
         aufbau: aufbau === "ja",
-        funktion,
+        funktion: capitalize(funktion),
         trainername: trainerName,
       },
     ]);
