@@ -4,6 +4,17 @@ import { generateTrainerPDF } from "@/lib/pdf/generateTrainerPDF";
 
 export const dynamic = "force-dynamic";
 
+function sanitizeFileName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, "_")           // Leerzeichen → Unterstrich
+    .replace(/[äÄ]/g, "ae")
+    .replace(/[öÖ]/g, "oe")
+    .replace(/[üÜ]/g, "ue")
+    .replace(/[ß]/g, "ss")
+    .replace(/[^a-z0-9_\-\.]/g, ""); // Entferne sonstige Sonderzeichen
+}
+
 export async function POST(req: Request) {
   try {
     const { trainername, monat, jahr } = await req.json();
@@ -49,7 +60,9 @@ export async function POST(req: Request) {
       jahr: String(jahr),
     });
 
-    const filename = `abrechnung-${trainername}-${monat}-${jahr}.pdf`;
+    const safeName = sanitizeFileName(trainername);
+    const filename = `abrechnung-${safeName}-${monat}-${jahr}.pdf`;
+
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from("pdfs")
