@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { capitalize } from "@/lib/utils/capitalize";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
@@ -143,7 +144,7 @@ export default function AdminPage() {
         beginn,
         ende,
         hallenfeld,
-        funktion,
+        funktion: capitalize(funktion),
         aufbau: aufbau === "ja",
         trainername,
       },
