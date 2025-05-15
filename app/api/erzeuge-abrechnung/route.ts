@@ -16,7 +16,19 @@ function sanitizeFileName(name: string): string {
 }
 
 export async function POST(req: Request) {
+  
+  const { data: saetze, error: satzError } = await supabaseAdmin
+  .from("vergütungssätze")
+  .select("*");
+
+if (satzError || !saetze) {
+  return NextResponse.json({ error: "Fehler beim Laden der Vergütungssätze" }, { status: 500 });
+}
+
+  
   try {
+   
+   
     const { trainername, monat, jahr } = await req.json();
     console.log("[DEBUG] Eingangsdaten:", trainername, monat, jahr);
 
@@ -54,16 +66,18 @@ export async function POST(req: Request) {
       if (endMin < begMin) endMin += 1440;
       const stunden = (endMin - begMin) / 60 + (e.aufbau ? 0.5 : 0);
       // Nach Datum passenden Satz holen
-const passenderSatz = saetze
-  .filter((s) => s.funktion === e.funktion && new Date(s.gültig_ab) <= new Date(e.datum))
-  .sort((a, b) => new Date(b.gültig_ab).getTime() - new Date(a.gültig_ab).getTime())[0];
-if (!passenderSatz) {
-  console.warn("[PDF WARN] Kein Satz für", e.funktion, e.datum);
-}
+const passendeSaetze = saetze
+  .filter((s) =>
+    s.funktion.toLowerCase() === e.funktion.toLowerCase() &&
+    new Date(s.gültig_ab) <= new Date(e.datum)
+  )
+  .sort((a, b) =>
+    new Date(b.gültig_ab).getTime() - new Date(a.gültig_ab).getTime()
+  );
 
-const stundenlohn = passenderSatz?.stundenlohn ?? 0;
-const aufbauBonus = passenderSatz?.aufbau_bonus ?? 0;
-const betrag = stunden * stundenlohn + (e.aufbau ? aufbauBonus : 0);
+
+const satz = passendeSaetze[0];
+const betrag = stunden * (satz?.stundenlohn ?? 0) + (e.aufbau ? satz?.aufbau_bonus ?? 0 : 0);
 
       return { ...e, betrag };
     });
