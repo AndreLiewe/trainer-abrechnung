@@ -169,9 +169,10 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterMonat?.toString() || ""} onValueChange={(v) => setFilterMonat(Number(v))}>
       <SelectTrigger><SelectValue placeholder="Alle Monate" /></SelectTrigger>
       <SelectContent>
-        {[...Array(12)].map((_, i) => (
-          <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
-        ))}
+        {[...Array(12)].map((_, i) => 12 - i).map((m) => (
+  <SelectItem key={m} value={m.toString()}>{m}</SelectItem>
+))}
+
       </SelectContent>
     </Select>
   </div>
@@ -188,7 +189,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
   </div>
   <div className="w-full flex justify-end mt-2">
   <Button variant="ghost" size="sm" onClick={() => {
-    setFilterTrainer("");
+    setFilterTrainer("alle");
     setFilterMonat(null);
     setFilterJahr(null);
   }}>
