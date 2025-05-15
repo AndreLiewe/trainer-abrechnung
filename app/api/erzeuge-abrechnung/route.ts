@@ -77,7 +77,8 @@ const passendeSaetze = saetze
 
 
 const satz = passendeSaetze[0];
-const betrag = (stunden + (e.aufbau ? 0.5 : 0)) * satz.stundenlohn;
+const betrag = satz ? stunden * satz.stundenlohn : 0;
+
 
 
       return { ...e, betrag };
