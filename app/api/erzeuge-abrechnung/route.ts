@@ -38,6 +38,13 @@ export async function POST(req: Request) {
     if (!eintraege || eintraege.length === 0) {
       return NextResponse.json({ error: "Keine Einträge gefunden" }, { status: 404 });
     }
+    const { data: saetze, error: satzError } = await supabaseAdmin
+      .from("vergütungssätze")
+      .select("*");
+
+    if (satzError || !saetze) {
+      return NextResponse.json({ error: "Fehler beim Laden der Vergütungssätze", details: satzError?.message }, { status: 500 });
+    }
 
     const enriched = eintraege.map((e) => {
       const [h1, m1] = e.beginn.split(":").map(Number);
@@ -46,8 +53,16 @@ export async function POST(req: Request) {
       const endMin = h2 * 60 + m2;
       const duration = (endMin - begMin + (endMin < begMin ? 1440 : 0)) / 60;
       const stunden = duration + (e.aufbau ? 0.5 : 0);
-      const satz = e.funktion === "hilfstrainer" ? 10 : (e.datum >= "2024-04-01" ? 20 : 25);
-      return { ...e, betrag: stunden * satz };
+      // Nach Datum passenden Satz holen
+const passenderSatz = saetze
+  .filter((s) => s.funktion === e.funktion && s.gültig_ab <= e.datum)
+  .sort((a, b) => b.gültig_ab.localeCompare(a.gültig_ab))[0];
+
+const stundenlohn = passenderSatz?.stundenlohn ?? 0;
+const aufbauBonus = passenderSatz?.aufbau_bonus ?? 0;
+const betrag = stunden * stundenlohn + (e.aufbau ? aufbauBonus : 0);
+
+      return { ...e, betrag };
     });
 
     const summe = enriched.reduce((sum, e) => sum + e.betrag, 0);

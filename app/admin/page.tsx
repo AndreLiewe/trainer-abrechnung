@@ -7,12 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { capitalize } from "@/lib/utils/capitalize";
+import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 dayjs.locale("de");
 
+type Satz = {
+  funktion: string;
+  stundenlohn: number;
+  aufbau_bonus: number;
+  gültig_ab: string;
+};
 
 type Abrechnung = {
   id: string;
@@ -101,6 +108,16 @@ export default function AdminPage() {
     if (isAdmin) fetchData();
   }, [fetchData, isAdmin]);
 
+  const [saetze, setSaetze] = useState<Satz[]>([]);
+
+useEffect(() => {
+  const ladeSaetze = async () => {
+    const { data } = await supabase.from("vergütungssätze").select("*");
+    setSaetze(data || []);
+  };
+  if (isAdmin) ladeSaetze();
+}, [isAdmin]);
+
 
   useEffect(() => {
   const ladeAbgerechnete = async () => {
@@ -152,20 +169,7 @@ export default function AdminPage() {
     fetchData();
   };
 
-  const berechneVerguetung = (beginn: string, ende: string, aufbau: boolean, funktion: string) => {
-    const [hBeginn, mBeginn] = beginn.split(":").map(Number);
-    const [hEnde, mEnde] = ende.split(":").map(Number);
-    const beginnMin = hBeginn * 60 + mBeginn;
-    let endeMin = hEnde * 60 + mEnde;
-    if (endeMin < beginnMin) endeMin += 24 * 60;
-
-    let dauer = (endeMin - beginnMin) / 60;
-    if (aufbau) dauer += 0.5;
-
-    const stundenlohn = funktion === "hilfstrainer" ? 10 : 20;
-    const betrag = dauer * stundenlohn;
-    return betrag.toFixed(2);
-  };
+  
 
   const findeKonflikt = (eintrag: Abrechnung, alle: Abrechnung[]) => {
   const start1 = new Date(`${eintrag.datum}T${eintrag.beginn}`);
@@ -370,7 +374,8 @@ const key = `${e.trainername}_${monat}_${jahr}`;
       <td>{e.funktion}</td>
       <td>{e.aufbau ? "Ja" : "Nein"}</td>
       <td>{e.trainername}</td>
-      <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion)}</td>
+      <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion, e.datum.split("T")[0], saetze).toFixed(2)}</td>
+
       <td className="text-red-600">{findeKonflikt(e, entries)}</td>
       <td className="space-x-2">
   {!istAbgerechnet && (
