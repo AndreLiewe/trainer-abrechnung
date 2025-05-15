@@ -1,7 +1,6 @@
 export type Satz = {
   funktion: string;
   stundenlohn: number;
-  aufbau_bonus: number;
   gültig_ab: string;
 };
 
@@ -46,5 +45,6 @@ export function berechneVerguetung(
     return 0;
   }
 
-  return dauer * satz.stundenlohn + (aufbau ? satz.aufbau_bonus : 0);
+  return (dauer + (aufbau ? 0.5 : 0)) * satz.stundenlohn;
+
 }
