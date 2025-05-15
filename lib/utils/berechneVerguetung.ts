@@ -23,7 +23,8 @@ export function berechneVerguetung(
   if (aufbau) dauer += 0.5;
 
   const satz = saetze
-    .filter((s) => s.funktion === funktion && s.gültig_ab <= datum)
+    .filter((s) => s.funktion === funktion && new Date(s.gültig_ab) <= new Date(datum)
+)
     .sort((a, b) => b.gültig_ab.localeCompare(a.gültig_ab))[0];
 
   const stundenlohn = satz?.stundenlohn ?? 0;

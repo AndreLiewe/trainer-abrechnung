@@ -55,8 +55,9 @@ export async function POST(req: Request) {
       const stunden = duration + (e.aufbau ? 0.5 : 0);
       // Nach Datum passenden Satz holen
 const passenderSatz = saetze
-  .filter((s) => s.funktion === e.funktion && s.gültig_ab <= e.datum)
-  .sort((a, b) => b.gültig_ab.localeCompare(a.gültig_ab))[0];
+  .filter((s) => s.funktion === e.funktion && new Date(s.gültig_ab) <= new Date(e.datum))
+  .sort((a, b) => new Date(b.gültig_ab).getTime() - new Date(a.gültig_ab).getTime())[0];
+
 
 const stundenlohn = passenderSatz?.stundenlohn ?? 0;
 const aufbauBonus = passenderSatz?.aufbau_bonus ?? 0;
