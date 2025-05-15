@@ -41,9 +41,9 @@ export default function AdminAbrechnungenPage() {
 
 const gefilterteAbrechnungen = abrechnungen.filter((a) => {
   return (
-    (!selectedTrainer || a.trainername === selectedTrainer) &&
-    (!selectedMonat || a.monat === selectedMonat) &&
-    (!selectedJahr || a.jahr === selectedJahr)
+    (!filterTrainer || a.trainername === filterTrainer) &&
+    (!filterMonat || a.monat === filterMonat) &&
+    (!filterJahr || a.jahr === filterJahr)
   );
 });
 
@@ -156,7 +156,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterTrainer} onValueChange={setFilterTrainer}>
       <SelectTrigger><SelectValue placeholder="Alle" /></SelectTrigger>
       <SelectContent>
-        <SelectItem value="alle">Alle</SelectItem> 
+        <SelectItem value="">Alle</SelectItem>
         {trainerList.map((name) => (
           <SelectItem key={name} value={name}>{name}</SelectItem>
         ))}
