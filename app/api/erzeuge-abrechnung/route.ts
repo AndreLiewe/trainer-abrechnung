@@ -49,15 +49,17 @@ export async function POST(req: Request) {
     const enriched = eintraege.map((e) => {
       const [h1, m1] = e.beginn.split(":").map(Number);
       const [h2, m2] = e.ende.split(":").map(Number);
-      const begMin = h1 * 60 + m1;
-      const endMin = h2 * 60 + m2;
-      const duration = (endMin - begMin + (endMin < begMin ? 1440 : 0)) / 60;
-      const stunden = duration + (e.aufbau ? 0.5 : 0);
+      let begMin = h1 * 60 + m1;
+      let endMin = h2 * 60 + m2;
+      if (endMin < begMin) endMin += 1440;
+      const stunden = (endMin - begMin) / 60 + (e.aufbau ? 0.5 : 0);
       // Nach Datum passenden Satz holen
 const passenderSatz = saetze
   .filter((s) => s.funktion === e.funktion && new Date(s.gültig_ab) <= new Date(e.datum))
   .sort((a, b) => new Date(b.gültig_ab).getTime() - new Date(a.gültig_ab).getTime())[0];
-
+if (!passenderSatz) {
+  console.warn("[PDF WARN] Kein Satz für", e.funktion, e.datum);
+}
 
 const stundenlohn = passenderSatz?.stundenlohn ?? 0;
 const aufbauBonus = passenderSatz?.aufbau_bonus ?? 0;

@@ -1,8 +1,8 @@
-type Satz = {
+export type Satz = {
   funktion: string;
   stundenlohn: number;
   aufbau_bonus: number;
-  gültig_ab: string;
+  gültig_ab: string; // ISO-String z. B. "2025-04-01"
 };
 
 export function berechneVerguetung(
@@ -15,20 +15,25 @@ export function berechneVerguetung(
 ): number {
   const [hBeginn, mBeginn] = beginn.split(":").map(Number);
   const [hEnde, mEnde] = ende.split(":").map(Number);
-  const beginnMin = hBeginn * 60 + mBeginn;
+
+  let beginnMin = hBeginn * 60 + mBeginn;
   let endeMin = hEnde * 60 + mEnde;
-  if (endeMin < beginnMin) endeMin += 24 * 60;
+  if (endeMin < beginnMin) endeMin += 1440; // über Mitternacht
 
   let dauer = (endeMin - beginnMin) / 60;
-  if (aufbau) dauer += 0.5;
 
-  const satz = saetze
-    .filter((s) => s.funktion === funktion && new Date(s.gültig_ab) <= new Date(datum)
-)
-    .sort((a, b) => b.gültig_ab.localeCompare(a.gültig_ab))[0];
+  const gültigeSaetze = saetze
+    .filter(
+      (s) => s.funktion === funktion && new Date(s.gültig_ab) <= new Date(datum)
+    )
+    .sort((a, b) => new Date(b.gültig_ab).getTime() - new Date(a.gültig_ab).getTime());
 
-  const stundenlohn = satz?.stundenlohn ?? 0;
-  const bonus = satz?.aufbau_bonus ?? 0;
+  const satz = gültigeSaetze[0];
 
-  return dauer * stundenlohn + (aufbau ? bonus : 0);
+  if (!satz) {
+    console.warn("[WARN] Kein gültiger Satz gefunden für", funktion, datum);
+    return 0;
+  }
+
+  return dauer * satz.stundenlohn + (aufbau ? satz.aufbau_bonus : 0);
 }

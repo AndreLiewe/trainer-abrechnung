@@ -388,6 +388,7 @@ const key = `${e.trainername}_${monat}_${jahr}`;
 
     </tr>
   );
+  
 })}
 
             </tbody>
