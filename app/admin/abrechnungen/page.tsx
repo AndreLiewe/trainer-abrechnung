@@ -30,6 +30,10 @@ export default function AdminAbrechnungenPage() {
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [sortField, setSortField] = useState<"monat" | "jahr" | null>(null);
+  const [sortAsc, setSortAsc] = useState(true);
+
+
   const [trainerList, setTrainerList] = useState<string[]>([]);
   const [selectedTrainer, setSelectedTrainer] = useState("");
   const [selectedMonat, setSelectedMonat] = useState<number>(new Date().getMonth() + 1);
@@ -169,9 +173,10 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterMonat?.toString() || ""} onValueChange={(v) => setFilterMonat(Number(v))}>
       <SelectTrigger><SelectValue placeholder="Alle Monate" /></SelectTrigger>
       <SelectContent>
-        {[...Array(12)].map((_, i) => 12 - i).map((m) => (
-  <SelectItem key={m} value={m.toString()}>{m}</SelectItem>
+        {[...Array(12)].map((_, i) => (
+  <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
 ))}
+
 
       </SelectContent>
     </Select>
@@ -205,8 +210,30 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
             <thead>
               <tr className="text-left border-b">
                 <th>Trainer</th>
-                <th>Monat</th>
-                <th>Jahr</th>
+                <th>
+  <button
+    onClick={() => {
+      setSortField("monat");
+      setSortAsc((prev) => (sortField === "monat" ? !prev : true));
+    }}
+    className="underline"
+  >
+    Monat {sortField === "monat" ? (sortAsc ? "⬆️" : "⬇️") : ""}
+  </button>
+</th>
+
+                <th>
+  <button
+    onClick={() => {
+      setSortField("jahr");
+      setSortAsc((prev) => (sortField === "jahr" ? !prev : true));
+    }}
+    className="underline"
+  >
+    Jahr {sortField === "jahr" ? (sortAsc ? "⬆️" : "⬇️") : ""}
+  </button>
+</th>
+
                 <th>Summe (€)</th>
                 <th>Status</th>
                 <th>PDF</th>
@@ -214,7 +241,18 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
               </tr>
             </thead>
             <tbody>
-              {gefilterteAbrechnungen.map((a) => (
+             {[...gefilterteAbrechnungen]
+  .sort((a, b) => {
+    if (sortField === "monat") {
+      return sortAsc ? a.monat - b.monat : b.monat - a.monat;
+    }
+    if (sortField === "jahr") {
+      return sortAsc ? a.jahr - b.jahr : b.jahr - a.jahr;
+    }
+    return 0;
+  })
+  .map((a) => (
+
 
 
                 <tr key={a.id} className="border-b hover:bg-gray-50">
