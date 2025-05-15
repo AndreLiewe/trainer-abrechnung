@@ -35,15 +35,15 @@ export default function AdminAbrechnungenPage() {
   const [selectedMonat, setSelectedMonat] = useState<number>(new Date().getMonth() + 1);
   const [selectedJahr, setSelectedJahr] = useState<number>(new Date().getFullYear());
 
-  const [filterTrainer, setFilterTrainer] = useState<string>("");
+  const [filterTrainer, setFilterTrainer] = useState<string>("alle");
   const [filterMonat, setFilterMonat] = useState<number | null>(null);
   const [filterJahr, setFilterJahr] = useState<number | null>(null);
 
 const gefilterteAbrechnungen = abrechnungen.filter((a) => {
   return (
-    (!filterTrainer || a.trainername === filterTrainer) &&
-    (!filterMonat || a.monat === filterMonat) &&
-    (!filterJahr || a.jahr === filterJahr)
+    (filterTrainer === "alle" || a.trainername === filterTrainer) &&
+    (filterMonat === null || a.monat === filterMonat) &&
+    (filterJahr === null || a.jahr === filterJahr)
   );
 });
 
@@ -156,7 +156,8 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterTrainer} onValueChange={setFilterTrainer}>
       <SelectTrigger><SelectValue placeholder="Alle" /></SelectTrigger>
       <SelectContent>
-        <SelectItem value="">Alle</SelectItem>
+        <SelectItem value="alle">Alle</SelectItem>
+
         {trainerList.map((name) => (
           <SelectItem key={name} value={name}>{name}</SelectItem>
         ))}
