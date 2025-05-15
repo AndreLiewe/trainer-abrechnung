@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const enriched = eintraege.map((e) => {
       const [h1, m1] = e.beginn.split(":").map(Number);
       const [h2, m2] = e.ende.split(":").map(Number);
-      let begMin = h1 * 60 + m1;
+      const begMin = h1 * 60 + m1;
       let endMin = h2 * 60 + m2;
       if (endMin < begMin) endMin += 1440;
       const stunden = (endMin - begMin) / 60 + (e.aufbau ? 0.5 : 0);

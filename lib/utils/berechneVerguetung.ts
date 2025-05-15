@@ -16,11 +16,11 @@ export function berechneVerguetung(
   const [hBeginn, mBeginn] = beginn.split(":").map(Number);
   const [hEnde, mEnde] = ende.split(":").map(Number);
 
-  let beginnMin = hBeginn * 60 + mBeginn;
+  const beginnMin = hBeginn * 60 + mBeginn;
   let endeMin = hEnde * 60 + mEnde;
   if (endeMin < beginnMin) endeMin += 1440; // über Mitternacht
 
-  let dauer = (endeMin - beginnMin) / 60;
+  const dauer = (endeMin - beginnMin) / 60;
 
   const gültigeSaetze = saetze
     .filter(
