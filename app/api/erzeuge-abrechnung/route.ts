@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { generateTrainerPDF } from "@/lib/pdf/generateTrainerPDF";
+import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
+
 
 export const dynamic = "force-dynamic";
 
@@ -59,25 +61,15 @@ if (satzError || !saetze) {
     }
 
     const enriched = eintraege.map((e) => {
-      const [h1, m1] = e.beginn.split(":").map(Number);
-      const [h2, m2] = e.ende.split(":").map(Number);
-      const begMin = h1 * 60 + m1;
-      let endMin = h2 * 60 + m2;
-      if (endMin < begMin) endMin += 1440;
-      const stunden = (endMin - begMin) / 60 + (e.aufbau ? 0.5 : 0);
-      // Nach Datum passenden Satz holen
-const passendeSaetze = saetze
-  .filter((s) =>
-    s.funktion.toLowerCase() === e.funktion.toLowerCase() &&
-    new Date(s.gültig_ab) <= new Date(e.datum)
-  )
-  .sort((a, b) =>
-    new Date(b.gültig_ab).getTime() - new Date(a.gültig_ab).getTime()
-  );
+      const betrag = berechneVerguetung(
+  e.beginn,
+  e.ende,
+  e.aufbau,
+  e.funktion,
+  e.datum,
+  saetze
+);
 
-
-const satz = passendeSaetze[0];
-const betrag = satz ? stunden * satz.stundenlohn : 0;
 
 
 
