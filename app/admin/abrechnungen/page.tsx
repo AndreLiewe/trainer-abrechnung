@@ -156,7 +156,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterTrainer} onValueChange={setFilterTrainer}>
       <SelectTrigger><SelectValue placeholder="Alle" /></SelectTrigger>
       <SelectContent>
-        <SelectItem value="">Alle</SelectItem>
+        <SelectItem value="alle">Alle</SelectItem>  // ✅ funktioniert
         {trainerList.map((name) => (
           <SelectItem key={name} value={name}>{name}</SelectItem>
         ))}
