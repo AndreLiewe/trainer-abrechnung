@@ -23,10 +23,31 @@ interface Abrechnung {
   freigabe_am?: string;
 }
 
+
+
+
 export default function AdminAbrechnungenPage() {
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [trainerList, setTrainerList] = useState<string[]>([]);
+  const [selectedTrainer, setSelectedTrainer] = useState("");
+  const [selectedMonat, setSelectedMonat] = useState<number>(new Date().getMonth() + 1);
+  const [selectedJahr, setSelectedJahr] = useState<number>(new Date().getFullYear());
+
+  const [filterTrainer, setFilterTrainer] = useState<string>("");
+  const [filterMonat, setFilterMonat] = useState<number | null>(null);
+  const [filterJahr, setFilterJahr] = useState<number | null>(null);
+
+const gefilterteAbrechnungen = abrechnungen.filter((a) => {
+  return (
+    (!selectedTrainer || a.trainername === selectedTrainer) &&
+    (!selectedMonat || a.monat === selectedMonat) &&
+    (!selectedJahr || a.jahr === selectedJahr)
+  );
+});
+
+const summe = gefilterteAbrechnungen.reduce((acc, a) => acc + (a.summe || 0), 0);
   useEffect(() => {
     const fetchAbrechnungen = async () => {
       const { data } = await supabase.from("monatsabrechnungen").select("*");
@@ -113,11 +134,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     );
   };
 
-  const [trainerList, setTrainerList] = useState<string[]>([]);
-  const [selectedTrainer, setSelectedTrainer] = useState("");
-  const [selectedMonat, setSelectedMonat] = useState<number>(new Date().getMonth() + 1);
-  const [selectedJahr, setSelectedJahr] = useState<number>(new Date().getFullYear());
-
+  
   useEffect(() => {
     const fetchTrainer = async () => {
       const { data } = await supabase.from("trainer_profiles").select("name");
@@ -133,6 +150,52 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <div className="p-6 max-w-5xl mx-auto">
       <Toaster />
       <h1 className="text-2xl font-bold mb-4">📄 Monatsabrechnungen</h1>
+<div className="flex gap-4 mb-6 flex-wrap">
+  <div className="w-40">
+    <label className="block text-sm mb-1">Trainer</label>
+    <Select value={filterTrainer} onValueChange={setFilterTrainer}>
+      <SelectTrigger><SelectValue placeholder="Alle" /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value="">Alle</SelectItem>
+        {trainerList.map((name) => (
+          <SelectItem key={name} value={name}>{name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+  <div className="w-32">
+    <label className="block text-sm mb-1">Monat</label>
+    <Select value={filterMonat?.toString() || ""} onValueChange={(v) => setFilterMonat(Number(v))}>
+      <SelectTrigger><SelectValue placeholder="Alle Monate" /></SelectTrigger>
+      <SelectContent>
+        {[...Array(12)].map((_, i) => (
+          <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+  <div className="w-32">
+    <label className="block text-sm mb-1">Jahr</label>
+    <Select value={filterJahr?.toString() || ""} onValueChange={(v) => setFilterJahr(Number(v))}>
+      <SelectTrigger><SelectValue placeholder="Alle Jahre" /></SelectTrigger>
+      <SelectContent>
+        {[2024, 2025].map((year) => (
+          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+  <div className="w-full flex justify-end mt-2">
+  <Button variant="ghost" size="sm" onClick={() => {
+    setFilterTrainer("");
+    setFilterMonat(null);
+    setFilterJahr(null);
+  }}>
+    🔄 Filter zurücksetzen
+  </Button>
+</div>
+
+</div>
 
       <Card>
         <CardContent className="overflow-x-auto p-4">
@@ -149,7 +212,9 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
               </tr>
             </thead>
             <tbody>
-              {abrechnungen.map((a) => (
+              {gefilterteAbrechnungen.map((a) => (
+
+
                 <tr key={a.id} className="border-b hover:bg-gray-50">
                   <td>{a.trainername}</td>
                   <td>{a.monat}</td>
@@ -197,6 +262,9 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
             </tbody>
           </table>
         </CardContent>
+        <p className="text-sm mt-2 text-right font-medium">
+  Gesamt-Summe: <span className="font-bold">{summe.toFixed(2)} €</span>
+</p>
       </Card>
 
       <div className="mt-6 border-t pt-6">
