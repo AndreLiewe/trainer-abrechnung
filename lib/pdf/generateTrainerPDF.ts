@@ -30,14 +30,14 @@ export async function generateTrainerPDF({
   jahr,
 }: PDFProps): Promise<Buffer> {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([842, 595]); // A4 quer
+  const page = pdfDoc.addPage([842, 595]);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontSize = 10;
   const margin = 40;
   let y = 545;
 
-  const drawText = (text: string, x: number, y: number, size = fontSize) => {
-    page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
+  const drawText = (text: string, x: number, y: number, size = fontSize, color = rgb(0, 0, 0)) => {
+    page.drawText(text, { x, y, size, font, color });
   };
 
   drawText("Abrechnung Aufwandsentschädigung", margin, y, 14);
@@ -59,95 +59,70 @@ export async function generateTrainerPDF({
   }
 
   const rowHeight = 20;
-  const startY = y;
-  let currentY = y - rowHeight;
+  const drawRow = (row: string[], yPos: number, strike = false) => {
+    row.forEach((cell, i) => {
+      const x = cols[i];
+      drawText(cell, x + 4, yPos + 5);
+      if (strike) {
+        const width = font.widthOfTextAtSize(cell, fontSize);
+        page.drawLine({
+          start: { x: x + 4, y: yPos + 10 },
+          end: { x: x + 4 + width, y: yPos + 10 },
+          thickness: 0.5,
+          color: rgb(1, 0, 0),
+        });
+      }
+    });
 
-  page.drawLine({
-  start: { x: margin, y: startY },
-  end: { x: xPos, y: startY },
-  thickness: 0.5,
-  color: rgb(0, 0, 0),
-});
+    page.drawLine({
+      start: { x: margin, y: yPos },
+      end: { x: xPos, y: yPos },
+      thickness: 0.5,
+      color: rgb(0, 0, 0),
+    });
+  };
 
-  const allRows = [headers];
+  const drawSection = (title: string, list: AbrechnungsEintrag[]) => {
+    drawText(title, margin, y);
+    y -= rowHeight;
+    drawRow(headers, y);
+    y -= rowHeight;
 
-for (const e of eintraege) {
-  const row = [
-    getWochentag(e.datum),
-    e.datum,
-    e.sparte,
-    `${e.beginn}–${e.ende}`,
-    e.funktion,
-    e.aufbau ? "Ja" : "Nein",
-    `${e.betrag.toFixed(2)} €`,
-  ];
-
-  allRows.push(row);
-}
-
-
-  for (const row of allRows) {
-    row.forEach((cell, idx) => {
-  const x = cols[idx];
-  const eintrag = eintraege[allRows.indexOf(row) - 1]; // korrekt und jetzt auch verwendet
-
-  if (typeof x === "number") {
-    if (typeof cell === "string" && idx === 2 && eintrag?.typ === "korrektur-neu") {
-      drawText(`${cell} (neu)`, x + 4, currentY + 5);
-    } else if (eintrag?.typ === "korrektur-alt") {
-      drawText(cell, x + 4, currentY + 5, fontSize);
-      const textWidth = font.widthOfTextAtSize(cell, fontSize);
-      const textHeight = fontSize / 2;
-      page.drawLine({
-        start: { x: x + 4, y: currentY + 5 + textHeight },
-        end: { x: x + 4 + textWidth, y: currentY + 5 + textHeight },
-        thickness: 0.5,
-        color: rgb(1, 0, 0),
-      });
-    } else {
-      drawText(cell, x + 4, currentY + 5);
+    let sum = 0;
+    for (const e of list) {
+      const row = [
+        getWochentag(e.datum),
+        e.datum,
+        e.sparte,
+        `${e.beginn}–${e.ende}`,
+        e.funktion,
+        e.aufbau ? "Ja" : "Nein",
+        `${e.betrag.toFixed(2)} €`,
+      ];
+      const isStrike = e.typ === "korrektur-alt";
+      drawRow(row, y, isStrike);
+      sum += e.betrag;
+      y -= rowHeight;
     }
-  }
-});
 
+    drawText(`Teilsumme: ${sum.toFixed(2)} €`, margin, y);
+    y -= rowHeight;
+    return sum;
+  };
 
-    // horizontale Linie
-    page.drawLine({
-      start: { x: margin, y: currentY },
-      end: { x: xPos, y: currentY },
-      thickness: 0.5,
-      color: rgb(0, 0, 0),
-    });
+  const normal = eintraege.filter((e) => e.typ === "normal");
+  const nachtrag = eintraege.filter((e) => e.typ === "nachtrag");
+  const korrekturenAlt = eintraege.filter((e) => e.typ === "korrektur-alt");
+  const korrekturenNeu = eintraege.filter((e) => e.typ === "korrektur-neu");
 
-    currentY -= rowHeight;
-  }
+  const sumNormal = drawSection("🟩 Normale Einträge", normal);
+  const sumNachtrag = drawSection("🟦 Nachträge", nachtrag);
+  const sumKorr = drawSection("🟥 Korrekturen (alt)", korrekturenAlt);
+  const sumKorrNeu = drawSection("🟨 Korrekturen (neu)", korrekturenNeu);
 
-  // vertikale Linien
-  for (let i = 0; i < cols.length; i++) {
-    const x = cols[i];
-    page.drawLine({
-      start: { x, y: currentY + rowHeight },
-      end: { x, y: startY },
-      thickness: 0.5,
-      color: rgb(0, 0, 0),
-    });
-  }
-
-  // rechte Außenkante
-  page.drawLine({
-    start: { x: xPos, y: currentY + rowHeight },
-    end: { x: xPos, y: startY },
-    thickness: 0.5,
-    color: rgb(0, 0, 0),
-  });
-
-  y = currentY - 20;
-  const gesamt = eintraege
-  .filter((e) => e.typ !== "korrektur-alt")
-  .reduce((s, e) => s + e.betrag, 0)
-  .toFixed(2);
-
-  drawText(`Gesamtsumme: ${gesamt} €`, margin, y, 12);
+  y -= 10;
+  const total = sumNormal + sumNachtrag + sumKorr + sumKorrNeu;
+  drawText(`Gesamtsumme: ${total.toFixed(2)} €`, margin, y, 12);
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
