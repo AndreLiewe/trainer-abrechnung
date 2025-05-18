@@ -40,6 +40,16 @@ export default function KorrekturPage() {
   });
 
   const router = useRouter();
+useEffect(() => {
+  const fetchTrainer = async () => {
+    const { data } = await supabase.from("trainer_profiles").select("name");
+    if (data) {
+      const namen = data.map((t) => t.name).filter(Boolean);
+      setTrainerList(namen);
+    }
+  };
+  fetchTrainer();
+}, []);
 
 useEffect(() => {
   if (!selectedTrainer) return;
@@ -198,7 +208,7 @@ useEffect(() => {
 
       {/* Auflistung Korrekturen */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2">🗃️ Deine bisherigen Korrekturen</h2>
+        <h2 className="text-lg font-semibold mb-2">🗃️ Korrekturen für {selectedTrainer || "..."}</h2>
         {korrekturen.length === 0 ? (
           <p className="text-sm text-gray-500">Noch keine Korrekturen vorhanden.</p>
         ) : (
