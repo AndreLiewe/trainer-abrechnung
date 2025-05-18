@@ -23,8 +23,6 @@ interface KorrekturEintrag {
 }
 
 export default function KorrekturPage() {
-  const [trainerList, setTrainerList] = useState<string[]>([]);
-  const [selectedTrainer, setSelectedTrainer] = useState<string>("");
   const [originalList, setOriginalList] = useState<KorrekturEintrag[]>([]);
   const [korrekturen, setKorrekturen] = useState<KorrekturEintrag[]>([]);
   const [originalId, setOriginalId] = useState("");
@@ -40,6 +38,8 @@ export default function KorrekturPage() {
   });
 
   const router = useRouter();
+  const [trainerList, setTrainerList] = useState<string[]>([]);
+  const [selectedTrainer, setSelectedTrainer] = useState<string>("");
 useEffect(() => {
   const fetchTrainer = async () => {
     const { data } = await supabase.from("trainer_profiles").select("name");
@@ -101,7 +101,7 @@ useEffect(() => {
       sparte,
       funktion,
       hallenfeld,
-      aufbau: aufbau === "ja",
+      aufbau: aufbau === "Ja",
       typ,
     };
 

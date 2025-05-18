@@ -8,6 +8,7 @@ interface AbrechnungsEintrag {
   funktion: string;
   aufbau: boolean;
   betrag: number;
+  typ: "normal" | "nachtrag" | "korrektur-alt" | "korrektur-neu";
 }
 
 interface PDFProps {
@@ -68,7 +69,10 @@ export async function generateTrainerPDF({
   color: rgb(0, 0, 0),
 });
 
-  const allRows = [headers, ...eintraege.map((e) => [
+  const allRows = [headers];
+
+for (const e of eintraege) {
+  const row = [
     getWochentag(e.datum),
     e.datum,
     e.sparte,
@@ -76,13 +80,38 @@ export async function generateTrainerPDF({
     e.funktion,
     e.aufbau ? "Ja" : "Nein",
     `${e.betrag.toFixed(2)} €`,
-  ])];
+  ];
+
+  allRows.push(row);
+}
+
 
   for (const row of allRows) {
-    row.forEach((cell, i) => {
-      const x = cols[i];
+    row.forEach((cell, idx) => {
+      const x = cols[idx];
+      const eintrag = eintraege[allRows.indexOf(row) - 1];
+
       if (typeof x === "number") {
-        drawText(String(cell), x + 4, currentY + 5);
+        if (typeof cell === "string" && idx === 2 && eintraege[idx - 1]?.typ === "korrektur-neu") {
+  drawText(`${cell} (neu)`, x + 4, currentY + 5);
+} else if (eintraege[idx - 1]?.typ === "korrektur-alt") {
+  drawText(cell, x + 4, currentY + 5, fontSize);
+
+// Manuelle Linie durch den Text
+const textWidth = font.widthOfTextAtSize(cell, fontSize);
+const textHeight = fontSize / 2;
+
+page.drawLine({
+  start: { x: x + 4, y: currentY + 5 + textHeight },
+  end: { x: x + 4 + textWidth, y: currentY + 5 + textHeight },
+  thickness: 0.5,
+  color: rgb(1, 0, 0), // rot
+});
+
+} else {
+  drawText(cell, x + 4, currentY + 5);
+}
+
       }
     });
 
@@ -117,7 +146,11 @@ export async function generateTrainerPDF({
   });
 
   y = currentY - 20;
-  const gesamt = eintraege.reduce((s, e) => s + e.betrag, 0).toFixed(2);
+  const gesamt = eintraege
+  .filter((e) => e.typ !== "korrektur-alt")
+  .reduce((s, e) => s + e.betrag, 0)
+  .toFixed(2);
+
   drawText(`Gesamtsumme: ${gesamt} €`, margin, y, 12);
 
   const pdfBytes = await pdfDoc.save();

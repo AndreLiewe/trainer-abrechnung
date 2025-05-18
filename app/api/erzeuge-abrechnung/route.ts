@@ -19,13 +19,6 @@ function sanitizeFileName(name: string): string {
 
 export async function POST(req: Request) {
   
-  const { data: saetze, error: satzError } = await supabaseAdmin
-  .from("vergütungssätze")
-  .select("*");
-
-if (satzError || !saetze) {
-  return NextResponse.json({ error: "Fehler beim Laden der Vergütungssätze" }, { status: 500 });
-}
 
   
   try {
@@ -37,54 +30,85 @@ if (satzError || !saetze) {
     const von = `${jahr}-${String(monat).padStart(2, "0")}-01`;
     const bis = `${jahr}-${String(monat + 1).padStart(2, "0")}-01`;
 
-    const { data: eintraege, error } = await supabaseAdmin
+   // 1. Normale Einträge
+const { data: eintraegeRaw, error: err1 } = await supabaseAdmin
+  .from("abrechnungen")
+  .select("*")
+  .eq("trainername", trainername)
+  .gte("datum", von)
+  .lt("datum", bis);
+
+if (err1) {
+  return NextResponse.json({ error: "Fehler beim Laden der Einträge", details: err1.message }, { status: 500 });
+}
+
+// 2. Korrekturen
+const { data: korrekturenRaw, error: err2 } = await supabaseAdmin
+  .from("korrekturen")
+  .select("*")
+  .eq("trainername", trainername)
+  .gte("datum", von)
+  .lt("datum", bis);
+
+if (err2) {
+  return NextResponse.json({ error: "Fehler beim Laden der Korrekturen", details: err2.message }, { status: 500 });
+}
+
+// 3. Vergütungssätze (duplikat entfernen wenn vorher schon geladen)
+const { data: saetze, error: satzError } = await supabaseAdmin
+  .from("vergütungssätze")
+  .select("*");
+
+if (satzError || !saetze) {
+  return NextResponse.json({ error: "Fehler beim Laden der Vergütungssätze", details: satzError?.message }, { status: 500 });
+}
+
+// 4. Mapping finaler Einträge
+const finalList = [];
+
+for (const e of eintraegeRaw || []) {
+  const betrag = berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion, e.datum, saetze);
+  finalList.push({ ...e, betrag, typ: "normal" });
+}
+
+for (const k of korrekturenRaw || []) {
+  if (k.typ === "nachtrag") {
+    const betrag = berechneVerguetung(k.beginn, k.ende, k.aufbau, k.funktion, k.datum, saetze);
+    finalList.push({ ...k, betrag, typ: "nachtrag" });
+  } else if (k.typ === "stornierung" || k.typ === "korrektur") {
+    // original laden
+    const { data: original } = await supabaseAdmin
       .from("abrechnungen")
-      .select("datum, sparte, beginn, ende, funktion, aufbau")
-      .eq("trainername", trainername)
-      .gte("datum", von)
-      .lt("datum", bis);
+      .select("*")
+      .eq("id", k.original_id)
+      .single();
 
-    if (error) {
-      console.error("[SUPABASE-ERROR]", error.message);
-      return NextResponse.json({ error: "Fehler beim Laden der Einträge", details: error.message }, { status: 500 });
+    if (original) {
+      const origBetrag = berechneVerguetung(original.beginn, original.ende, original.aufbau, original.funktion, original.datum, saetze);
+      finalList.push({ ...original, betrag: -1 * origBetrag, typ: "korrektur-alt" });
     }
 
-    if (!eintraege || eintraege.length === 0) {
-      return NextResponse.json({ error: "Keine Einträge gefunden" }, { status: 404 });
+    if (k.typ === "korrektur") {
+      const betrag = berechneVerguetung(k.beginn, k.ende, k.aufbau, k.funktion, k.datum, saetze);
+      finalList.push({ ...k, betrag, typ: "korrektur-neu" });
     }
-    const { data: saetze, error: satzError } = await supabaseAdmin
-      .from("vergütungssätze")
-      .select("*");
+  }
+}
 
-    if (satzError || !saetze) {
-      return NextResponse.json({ error: "Fehler beim Laden der Vergütungssätze", details: satzError?.message }, { status: 500 });
-    }
+if (finalList.length === 0) {
+  return NextResponse.json({ error: "Keine Einträge für Abrechnung vorhanden" }, { status: 404 });
+}
 
-    const enriched = eintraege.map((e) => {
-      const betrag = berechneVerguetung(
-  e.beginn,
-  e.ende,
-  e.aufbau,
-  e.funktion,
-  e.datum,
-  saetze
-);
+const summe = finalList.reduce((sum, e) => sum + e.betrag, 0);
+console.log("[DEBUG] Summe berechnet:", summe);
 
+const pdfBuffer = await generateTrainerPDF({
+  eintraege: finalList,
+  trainerName: trainername,
+  monat: String(monat).padStart(2, "0"),
+  jahr: String(jahr),
+});
 
-
-
-      return { ...e, betrag };
-    });
-
-    const summe = enriched.reduce((sum, e) => sum + e.betrag, 0);
-    console.log("[DEBUG] Summe berechnet:", summe);
-
-    const pdfBuffer = await generateTrainerPDF({
-      eintraege: enriched,
-      trainerName: trainername,
-      monat: String(monat).padStart(2, "0"),
-      jahr: String(jahr),
-    });
 
     const safeName = sanitizeFileName(trainername);
     const filename = `abrechnung-${safeName}-${monat}-${jahr}.pdf`;
