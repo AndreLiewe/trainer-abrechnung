@@ -115,10 +115,10 @@ export async function generateTrainerPDF({
   const korrekturenAlt = eintraege.filter((e) => e.typ === "korrektur-alt");
   const korrekturenNeu = eintraege.filter((e) => e.typ === "korrektur-neu");
 
-  const sumNormal = drawSection("🟩 Normale Einträge", normal);
-  const sumNachtrag = drawSection("🟦 Nachträge", nachtrag);
-  const sumKorr = drawSection("🟥 Korrekturen (alt)", korrekturenAlt);
-  const sumKorrNeu = drawSection("🟨 Korrekturen (neu)", korrekturenNeu);
+  const sumNormal = drawSection("Normale Einträge", normal);
+  const sumNachtrag = drawSection("Nachträge", nachtrag);
+  const sumKorr = drawSection("Korrekturen (alt)", korrekturenAlt);
+  const sumKorrNeu = drawSection("Korrekturen (neu)", korrekturenNeu);
 
   y -= 10;
   const total = sumNormal + sumNachtrag + sumKorr + sumKorrNeu;

@@ -87,10 +87,19 @@ useEffect(() => {
 
   const handleSubmit = async () => {
     const { datum, beginn, ende, sparte, funktion, hallenfeld, aufbau, typ } = formData;
-    if (!datum || !beginn || !ende || !sparte || !funktion || !hallenfeld || !aufbau || !typ) {
-      toast.error("Bitte alle Felder ausfüllen");
-      return;
-    }
+    if (formData.typ === "stornierung") {
+  if (!selectedTrainer || !originalId) {
+    toast.error("Bitte Trainer und Originaleintrag auswählen");
+    return;
+  }
+} else {
+  const { datum, beginn, ende, sparte, funktion, hallenfeld, aufbau } = formData;
+  if (!datum || !beginn || !ende || !sparte || !funktion || !hallenfeld || !aufbau) {
+    toast.error("Bitte alle Felder ausfüllen");
+    return;
+  }
+}
+
 
     const insertObj = {
       trainername: selectedTrainer,
