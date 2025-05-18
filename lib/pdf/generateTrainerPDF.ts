@@ -88,32 +88,28 @@ for (const e of eintraege) {
 
   for (const row of allRows) {
     row.forEach((cell, idx) => {
-      const x = cols[idx];
-      const eintrag = eintraege[allRows.indexOf(row) - 1];
+  const x = cols[idx];
+  const eintrag = eintraege[allRows.indexOf(row) - 1]; // korrekt und jetzt auch verwendet
 
-      if (typeof x === "number") {
-        if (typeof cell === "string" && idx === 2 && eintraege[idx - 1]?.typ === "korrektur-neu") {
-  drawText(`${cell} (neu)`, x + 4, currentY + 5);
-} else if (eintraege[idx - 1]?.typ === "korrektur-alt") {
-  drawText(cell, x + 4, currentY + 5, fontSize);
-
-// Manuelle Linie durch den Text
-const textWidth = font.widthOfTextAtSize(cell, fontSize);
-const textHeight = fontSize / 2;
-
-page.drawLine({
-  start: { x: x + 4, y: currentY + 5 + textHeight },
-  end: { x: x + 4 + textWidth, y: currentY + 5 + textHeight },
-  thickness: 0.5,
-  color: rgb(1, 0, 0), // rot
+  if (typeof x === "number") {
+    if (typeof cell === "string" && idx === 2 && eintrag?.typ === "korrektur-neu") {
+      drawText(`${cell} (neu)`, x + 4, currentY + 5);
+    } else if (eintrag?.typ === "korrektur-alt") {
+      drawText(cell, x + 4, currentY + 5, fontSize);
+      const textWidth = font.widthOfTextAtSize(cell, fontSize);
+      const textHeight = fontSize / 2;
+      page.drawLine({
+        start: { x: x + 4, y: currentY + 5 + textHeight },
+        end: { x: x + 4 + textWidth, y: currentY + 5 + textHeight },
+        thickness: 0.5,
+        color: rgb(1, 0, 0),
+      });
+    } else {
+      drawText(cell, x + 4, currentY + 5);
+    }
+  }
 });
 
-} else {
-  drawText(cell, x + 4, currentY + 5);
-}
-
-      }
-    });
 
     // horizontale Linie
     page.drawLine({
