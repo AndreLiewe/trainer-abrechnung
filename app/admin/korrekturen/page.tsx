@@ -8,10 +8,24 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+interface KorrekturEintrag {
+  id: string;
+  trainername: string;
+  datum: string;
+  beginn: string;
+  ende: string;
+  sparte: string;
+  funktion: string;
+  hallenfeld: string;
+  aufbau: boolean;
+  typ: "nachtrag" | "korrektur" | "stornierung";
+  original_id: string | null;
+}
+
 export default function KorrekturPage() {
   const [trainername, setTrainername] = useState("");
-  const [originalList, setOriginalList] = useState<any[]>([]);
-  const [korrekturen, setKorrekturen] = useState<any[]>([]);
+  const [originalList, setOriginalList] = useState<KorrekturEintrag[]>([]);
+  const [korrekturen, setKorrekturen] = useState<KorrekturEintrag[]>([]);
   const [originalId, setOriginalId] = useState("");
   const [formData, setFormData] = useState({
     datum: "",
