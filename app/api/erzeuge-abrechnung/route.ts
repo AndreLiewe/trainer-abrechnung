@@ -47,8 +47,8 @@ const { data: korrekturenRaw, error: err2 } = await supabaseAdmin
   .from("korrekturen")
   .select("*")
   .eq("trainername", trainername)
-  .gte("datum", von)
-  .lt("datum", bis);
+  .gte("erstellt_am", von)
+  .lt("erstellt_am", bis);
 
 if (err2) {
   return NextResponse.json({ error: "Fehler beim Laden der Korrekturen", details: err2.message }, { status: 500 });
