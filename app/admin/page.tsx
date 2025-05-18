@@ -454,6 +454,10 @@ const key = `${e.trainername}_${monat}_${jahr}`;
   <Button variant="default" onClick={() => router.push("/admin/abrechnungen")}>
     📄 Monatsabrechnungen
   </Button>
+  <Button variant="default" onClick={() => router.push("/admin/korrekturen")}>
+  ✏️ Korrekturen verwalten
+</Button>
+
 </div>
 
     </div>
