@@ -23,7 +23,8 @@ interface KorrekturEintrag {
 }
 
 export default function KorrekturPage() {
-  const [trainername, setTrainername] = useState("");
+  const [trainerList, setTrainerList] = useState<string[]>([]);
+  const [selectedTrainer, setSelectedTrainer] = useState<string>("");
   const [originalList, setOriginalList] = useState<KorrekturEintrag[]>([]);
   const [korrekturen, setKorrekturen] = useState<KorrekturEintrag[]>([]);
   const [originalId, setOriginalId] = useState("");
@@ -40,39 +41,39 @@ export default function KorrekturPage() {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const loadData = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const email = userData?.user?.email;
-      if (!email) return;
+useEffect(() => {
+  if (!selectedTrainer) return;
+  const loadData = async () => {
+    const { data: eintraege } = await supabase
+      .from("abrechnungen")
+      .select("*")
+      .eq("trainername", selectedTrainer);
+    setOriginalList(eintraege || []);
 
-      const { data: profile } = await supabase
-        .from("trainer_profiles")
-        .select("name")
-        .eq("email", email)
-        .single();
+    const { data: korrekte } = await supabase
+      .from("korrekturen")
+      .select("*")
+      .eq("trainername", selectedTrainer);
+    setKorrekturen(korrekte || []);
+  };
+  loadData();
+}, [selectedTrainer]);
+useEffect(() => {
+  if (selectedTrainer) {
+    setFormData({
+      datum: "",
+      beginn: "",
+      ende: "",
+      sparte: "",
+      funktion: "",
+      hallenfeld: "",
+      aufbau: "",
+      typ: "nachtrag",
+    });
+    setOriginalId("");
+  }
+}, [selectedTrainer]);
 
-      if (!profile?.name) return;
-
-      setTrainername(profile.name);
-
-      const { data: eintraege } = await supabase
-        .from("abrechnungen")
-        .select("*")
-        .eq("trainername", profile.name);
-
-      setOriginalList(eintraege || []);
-
-      const { data: korrekte } = await supabase
-        .from("korrekturen")
-        .select("*")
-        .eq("trainername", profile.name);
-
-      setKorrekturen(korrekte || []);
-    };
-
-    loadData();
-  }, []);
 
   const handleSubmit = async () => {
     const { datum, beginn, ende, sparte, funktion, hallenfeld, aufbau, typ } = formData;
@@ -82,7 +83,7 @@ export default function KorrekturPage() {
     }
 
     const insertObj = {
-      trainername,
+      trainername: selectedTrainer,
       original_id: typ === "nachtrag" ? null : originalId,
       datum,
       beginn,
@@ -109,6 +110,18 @@ export default function KorrekturPage() {
       <h1 className="text-2xl font-bold mb-6">🛠️ Korrekturbuchung</h1>
 
       {/* Eingabeformular */}
+      <div className="mb-4">
+  <label className="block text-sm mb-1">Trainer auswählen</label>
+  <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
+    <SelectTrigger><SelectValue placeholder="Trainer..." /></SelectTrigger>
+    <SelectContent>
+      {trainerList.map((name) => (
+        <SelectItem key={name} value={name}>{name}</SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+
       <div className="grid grid-cols-1 gap-4">
         <div>
           <label>Typ</label>
