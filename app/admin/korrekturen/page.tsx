@@ -101,18 +101,33 @@ useEffect(() => {
 }
 
 
-    const insertObj = {
-      trainername: selectedTrainer,
-      original_id: typ === "nachtrag" ? null : originalId,
-      datum,
-      beginn,
-      ende,
-      sparte,
-      funktion,
-      hallenfeld,
-      aufbau: aufbau === "Ja",
-      typ,
-    };
+    const insertObj =
+  typ === "stornierung"
+    ? {
+        trainername: selectedTrainer,
+        original_id: originalId,
+        datum: null,
+        beginn: null,
+        ende: null,
+        sparte: null,
+        funktion: null,
+        hallenfeld: null,
+        aufbau: null,
+        typ,
+      }
+    : {
+        trainername: selectedTrainer,
+        original_id: typ === "nachtrag" ? null : originalId,
+        datum,
+        beginn,
+        ende,
+        sparte,
+        funktion,
+        hallenfeld,
+        aufbau: aufbau === "ja",
+        typ,
+      };
+
 
     const { error } = await supabase.from("korrekturen").insert([insertObj]);
 
