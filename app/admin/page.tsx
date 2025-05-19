@@ -136,7 +136,8 @@ useEffect(() => {
     const { data: ferienData } = await supabase.from("ferien_feiertage").select("datum");
     const { data: standardData } = await supabase.from("standardzeiten").select("*");
     setFerien(ferienData || []);
-    setStandardzeiten(standardData || []);
+    setStandardzeiten((standardData || []).map(s => ({ ...s, wochentag: Number(s.wochentag) })));
+
   };
   if (isAdmin) ladeKonfliktDaten();
 }, [isAdmin]);
