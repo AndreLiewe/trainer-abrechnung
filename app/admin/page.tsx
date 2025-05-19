@@ -377,23 +377,26 @@ const key = `${e.trainername}_${monat}_${jahr}`;
       <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion, e.datum.split("T")[0], saetze).toFixed(2)}</td>
 
       <td className="text-red-600">
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="cursor-help underline decoration-dotted">
-          ⚠ {konflikte.length} Konflikt{konflikte.length !== 1 ? "e" : ""}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <ul className="text-xs max-w-xs space-y-1">
-          {konflikte.map((k, i) => (
-            <li key={i}>{k}</li>
-          ))}
-        </ul>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+  {konflikte.length > 0 && (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="cursor-help underline decoration-dotted">
+            ⚠ {konflikte.length} Konflikt{konflikte.length !== 1 ? "e" : ""}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <ul className="text-xs max-w-xs space-y-1">
+            {konflikte.map((k, i) => (
+              <li key={i}>{k}</li>
+            ))}
+          </ul>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )}
 </td>
+
 
       <td className="space-x-2">
   {!istAbgerechnet && (
