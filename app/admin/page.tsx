@@ -6,8 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { capitalize } from "@/lib/utils/capitalize";
 import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
+import { pruefeKonflikte } from "@/lib/utils/pruefeKonflikte";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
@@ -44,6 +46,10 @@ export default function AdminPage() {
   const [sortAscending, setSortAscending] = useState(true);
   const [showAbgerechnete, setShowAbgerechnete] = useState(false);
   const [abgerechneteKeys, setAbgerechneteKeys] = useState<Set<string>>(new Set());
+  const [ferien, setFerien] = useState<{ datum: string }[]>([]);
+  const ferienDaten = ferien.map(f => f.datum);
+  const [standardzeiten, setStandardzeiten] = useState<any[]>([]);
+
 
   const [newEntry, setNewEntry] = useState({
     datum: "",
@@ -117,6 +123,15 @@ useEffect(() => {
   };
   if (isAdmin) ladeSaetze();
 }, [isAdmin]);
+useEffect(() => {
+  const ladeKonfliktDaten = async () => {
+    const { data: ferienData } = await supabase.from("ferien_feiertage").select("datum");
+    const { data: standardData } = await supabase.from("standardzeiten").select("*");
+    setFerien(ferienData || []);
+    setStandardzeiten(standardData || []);
+  };
+  if (isAdmin) ladeKonfliktDaten();
+}, [isAdmin]);
 
 
   useEffect(() => {
@@ -171,32 +186,6 @@ useEffect(() => {
 
   
 
-  const findeKonflikt = (eintrag: Abrechnung, alle: Abrechnung[]) => {
-  const start1 = new Date(`${eintrag.datum}T${eintrag.beginn}`);
-  const end1 = new Date(`${eintrag.datum}T${eintrag.ende}`);
-  if (end1 <= start1) end1.setDate(end1.getDate() + 1); // bei Zeit über Mitternacht
-
-  for (const anderer of alle) {
-    if (anderer.id === eintrag.id) continue;
-
-    const start2 = new Date(`${anderer.datum}T${anderer.beginn}`);
-    const end2 = new Date(`${anderer.datum}T${anderer.ende}`);
-    if (end2 <= start2) end2.setDate(end2.getDate() + 1);
-
-    const gleicheZeit = start1 < end2 && end1 > start2;
-    const gleichesFeld = eintrag.hallenfeld === anderer.hallenfeld;
-    const gleicheSparte = eintrag.sparte === anderer.sparte;
-    const gleicherTag = eintrag.datum === anderer.datum;
-
-    if (gleicherTag && gleicheZeit && gleichesFeld) {
-      if (!gleicheSparte) return "⚠ Unterschiedliche Sparten";
-      if (eintrag.funktion === "trainer" && anderer.funktion === "trainer") {
-        return "⚠ Zwei Trainer";
-      }
-    }
-  }
-  return null;
-};
 
 
   if (!isAdmin) {
@@ -359,6 +348,8 @@ useEffect(() => {
 .map((e) => {
   const datumObj = new Date(e.datum);
 const monat = datumObj.getUTCMonth() + 1;
+const konflikte = pruefeKonflikte(e, entries, ferienDaten, standardzeiten);
+
 const jahr = datumObj.getUTCFullYear();
 const key = `${e.trainername}_${monat}_${jahr}`;
   const istAbgerechnet = abgerechneteKeys.has(key);
@@ -376,7 +367,25 @@ const key = `${e.trainername}_${monat}_${jahr}`;
       <td>{e.trainername}</td>
       <td>{berechneVerguetung(e.beginn, e.ende, e.aufbau, e.funktion, e.datum.split("T")[0], saetze).toFixed(2)}</td>
 
-      <td className="text-red-600">{findeKonflikt(e, entries)}</td>
+      <td className="text-red-600">
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="cursor-help underline decoration-dotted">
+          ⚠ {konflikte.length} Konflikt{konflikte.length !== 1 ? "e" : ""}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <ul className="text-xs max-w-xs space-y-1">
+          {konflikte.map((k, i) => (
+            <li key={i}>{k}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</td>
+
       <td className="space-x-2">
   {!istAbgerechnet && (
     <>
