@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { capitalize } from "@/lib/utils/capitalize";
 import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
 import { pruefeKonflikte } from "@/lib/utils/pruefeKonflikte";
@@ -34,7 +34,14 @@ type Abrechnung = {
   aufbau: boolean;
   trainername: string;
 };
-
+type Standardzeit = {
+  sparte: string;
+  wochentag: number;
+  beginn: string;
+  ende: string;
+  gültig_ab: string;
+  gültig_bis: string;
+};
 export default function AdminPage() {
   const [entries, setEntries] = useState<Abrechnung[]>([]);
   const [trainerList, setTrainerList] = useState<string[]>([]);
@@ -48,7 +55,8 @@ export default function AdminPage() {
   const [abgerechneteKeys, setAbgerechneteKeys] = useState<Set<string>>(new Set());
   const [ferien, setFerien] = useState<{ datum: string }[]>([]);
   const ferienDaten = ferien.map(f => f.datum);
-  const [standardzeiten, setStandardzeiten] = useState<any[]>([]);
+  const [standardzeiten, setStandardzeiten] = useState<Standardzeit[]>([]);
+
 
 
   const [newEntry, setNewEntry] = useState({
