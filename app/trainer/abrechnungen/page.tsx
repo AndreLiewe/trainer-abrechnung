@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import RequireAuth from "@/components/RequireAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 
 type Abrechnung = {
@@ -22,12 +23,12 @@ const MONATSNAMEN = [
 ];
 
 export default function MeineAbrechnungen() {
-    
+  const confirm = useConfirm();
 
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(true);
   const freigeben = async (id: string) => {
-  const confirmed = confirm("Abrechnung jetzt freigeben?");
+  const confirmed = await confirm({ message: "Abrechnung jetzt freigeben?" });
   if (!confirmed) return;
 
   const { error } = await supabase

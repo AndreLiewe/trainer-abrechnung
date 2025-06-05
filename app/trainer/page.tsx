@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
 
 type Abrechnungseintrag = {
@@ -117,8 +118,10 @@ export default function TrainerAbrechnung() {
     }
   };
 
+  const confirm = useConfirm();
+
   const handleDelete = async (id: string) => {
-    const confirmed = window.confirm("Diesen Eintrag wirklich löschen?");
+    const confirmed = await confirm({ message: "Diesen Eintrag wirklich löschen?" });
     if (!confirmed) return;
     const { error } = await supabase.from("abrechnungen").delete().eq("id", id);
     if (error) {
