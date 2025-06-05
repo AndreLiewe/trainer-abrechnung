@@ -34,3 +34,32 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Bestätigungsdialog verwenden
+
+Für Lösch- oder Reset-Aktionen steht ein wiederverwendbarer Bestätigungsdialog zur Verfügung. Dazu muss der globale Layout-Wrapper mit `ConfirmProvider` versehen werden:
+
+```tsx
+import { ConfirmProvider } from "@/components/ConfirmDialog";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ConfirmProvider>
+      {children}
+    </ConfirmProvider>
+  );
+}
+```
+
+Innerhalb von Client-Komponenten kannst du anschließend `useConfirm` aufrufen und auf die Bestätigung warten:
+
+```tsx
+import { useConfirm } from "@/components/ConfirmDialog";
+
+async function handleDelete() {
+  const ok = await useConfirm({ message: "Eintrag wirklich löschen?" });
+  if (ok) {
+    // ... Supabase-Operation ausführen
+  }
+}
+```

@@ -13,6 +13,7 @@ import { pruefeKonflikte } from "@/lib/utils/pruefeKonflikte";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { SPARTEN } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { useConfirm } from "@/components/ConfirmDialog";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 dayjs.locale("de");
@@ -71,6 +72,7 @@ export default function AdminPage() {
     trainername: ""
   });
   const router = useRouter();
+  const confirm = useConfirm();
   
   useEffect(() => {
     const checkUser = async () => {
@@ -162,7 +164,7 @@ useEffect(() => {
 }, [isAdmin]);
 
   const handleDelete = async (id: string) => {
-    const confirmed = confirm("Wirklich löschen?");
+    const confirmed = await confirm({ message: "Wirklich löschen?" });
     if (!confirmed) return;
     await supabase.from("abrechnungen").delete().eq("id", id);
     fetchData();

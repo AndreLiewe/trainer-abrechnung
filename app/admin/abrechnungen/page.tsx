@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import toast, { Toaster } from "react-hot-toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 dayjs.locale("de");
@@ -42,6 +43,8 @@ export default function AdminAbrechnungenPage() {
   const [filterTrainer, setFilterTrainer] = useState<string>("alle");
   const [filterMonat, setFilterMonat] = useState<number | null>(null);
   const [filterJahr, setFilterJahr] = useState<number | null>(null);
+
+  const confirm = useConfirm();
 
 const gefilterteAbrechnungen = abrechnungen.filter((a) => {
   return (
@@ -102,7 +105,7 @@ const summe = gefilterteAbrechnungen.reduce((acc, a) => acc + (a.summe || 0), 0)
 }
 };
 const resetAbrechnung = async (trainername: string, monat: number, jahr: number) => {
-  const confirmed = confirm("Abrechnung wirklich zurücksetzen und PDF löschen?");
+  const confirmed = await confirm({ message: "Abrechnung wirklich zurücksetzen und PDF löschen?" });
   if (!confirmed) return;
 
   const { data } = await supabase
