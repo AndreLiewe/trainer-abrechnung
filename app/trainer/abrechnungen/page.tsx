@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
+import { MONTH_NAMES_DE } from "@/lib/utils/dateHelpers";
 
 type Abrechnung = {
   id: string;
@@ -17,10 +18,6 @@ type Abrechnung = {
   pdf_url: string;
 };
 
-const MONATSNAMEN = [
-  "Januar", "Februar", "März", "April", "Mai", "Juni",
-  "Juli", "August", "September", "Oktober", "November", "Dezember"
-];
 
 export default function MeineAbrechnungen() {
   const confirm = useConfirm();
@@ -115,7 +112,7 @@ export default function MeineAbrechnungen() {
                 <tbody>
                   {abrechnungen.map((eintrag) => (
                     <tr key={eintrag.id} className="border-b">
-                      <td className="p-2">{MONATSNAMEN[eintrag.monat - 1]}</td>
+                      <td className="p-2">{MONTH_NAMES_DE[eintrag.monat - 1]}</td>
                       <td className="p-2">{eintrag.jahr}</td>
                       <td className="p-2 capitalize">{eintrag.status}</td>
                       <td className="p-2">
