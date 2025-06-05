@@ -54,12 +54,14 @@ const gefilterteAbrechnungen = abrechnungen.filter((a) => {
   );
 });
 
-const summe = gefilterteAbrechnungen.reduce((acc, a) => acc + (a.summe || 0), 0);
+  const summe = gefilterteAbrechnungen.reduce((acc, a) => acc + (a.summe || 0), 0);
+
+  const fetchAbrechnungen = async () => {
+    const { data } = await supabase.from("monatsabrechnungen").select("*");
+    if (data) setAbrechnungen(data);
+  };
+
   useEffect(() => {
-    const fetchAbrechnungen = async () => {
-      const { data } = await supabase.from("monatsabrechnungen").select("*");
-      if (data) setAbrechnungen(data);
-    };
     fetchAbrechnungen();
   }, []);
 
@@ -94,7 +96,7 @@ const summe = gefilterteAbrechnungen.reduce((acc, a) => acc + (a.summe || 0), 0)
       .eq("jahr", jahr);
 
     toast.success("PDF erfolgreich erstellt ✅");
-    location.reload();
+    fetchAbrechnungen();
 
   } catch (err: unknown) {
   if (err instanceof Error) {
@@ -129,7 +131,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     .eq("jahr", jahr);
 
   toast.success("Abrechnung zurückgesetzt 🔁");
-  location.reload();
+  fetchAbrechnungen();
 };
 
 
