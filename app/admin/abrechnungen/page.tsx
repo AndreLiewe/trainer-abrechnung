@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import toast, { Toaster } from "react-hot-toast";
+import { ABRECHNUNG_STATUS, type AbrechnungStatus } from "@/lib/constants";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 dayjs.locale("de");
@@ -18,7 +19,7 @@ interface Abrechnung {
   jahr: number;
   summe: number;
   pdf_url: string;
-  status: string;
+  status: AbrechnungStatus;
   erstellt_am: string;
   freigabe_am?: string;
 }
@@ -85,7 +86,7 @@ const summe = gefilterteAbrechnungen.reduce((acc, a) => acc + (a.summe || 0), 0)
     }
 
     await supabase.from("monatsabrechnungen")
-      .update({ status: "erstellt", pdf_url: json.url })
+      .update({ status: ABRECHNUNG_STATUS[1], pdf_url: json.url })
       .eq("trainername", trainername)
       .eq("monat", monat)
       .eq("jahr", jahr);
@@ -131,7 +132,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
 
 
 
-  const updateStatus = async (id: string, newStatus: string) => {
+  const updateStatus = async (id: string, newStatus: AbrechnungStatus) => {
     await supabase.from("monatsabrechnungen").update({ status: newStatus }).eq("id", id);
     setAbrechnungen((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
@@ -261,14 +262,16 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
                   <td>{a.jahr}</td>
                   <td>{a.summe != null ? a.summe.toFixed(2) : "-"}</td>
                   <td>
-                    <Select value={a.status} onValueChange={(val) => updateStatus(a.id, val)}>
+                    <Select value={a.status} onValueChange={(val) => updateStatus(a.id, val as AbrechnungStatus)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="offen">Offen</SelectItem>
-                        <SelectItem value="erstellt">Erstellt</SelectItem>
-                        <SelectItem value="bezahlt">Bezahlt</SelectItem>
-                        <SelectItem value="warten-auf-freigabe">Warten auf Freigabe</SelectItem>
-
+                        {ABRECHNUNG_STATUS.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status === "warten-auf-freigabe"
+                              ? "Warten auf Freigabe"
+                              : status.charAt(0).toUpperCase() + status.slice(1)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </td>
@@ -278,7 +281,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <a href={a.pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 underline block">
       PDF
     </a>
-    {a.status === "erstellt" && (
+    {a.status === ABRECHNUNG_STATUS[1] && (
       <Button
         size="sm"
         variant="destructive"

@@ -6,13 +6,14 @@ import RequireAuth from "@/components/RequireAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ABRECHNUNG_STATUS, type AbrechnungStatus } from "@/lib/constants";
 
 type Abrechnung = {
   id: string;
   trainername: string;
   monat: number;
   jahr: number;
-  status: string;
+  status: AbrechnungStatus;
   pdf_url: string;
 };
 
@@ -32,13 +33,13 @@ export default function MeineAbrechnungen() {
 
   const { error } = await supabase
     .from("monatsabrechnungen")
-    .update({ status: "offen", freigabe_am: new Date().toISOString() })
+    .update({ status: ABRECHNUNG_STATUS[0], freigabe_am: new Date().toISOString() })
     .eq("id", id);
 
   if (!error) {
     toast.success("Abrechnung freigegeben ✅");
     setAbrechnungen((prev) =>
-      prev.map((a) => a.id === id ? { ...a, status: "offen" } : a)
+      prev.map((a) => a.id === id ? { ...a, status: ABRECHNUNG_STATUS[0] } : a)
     );
   } else {
     toast.error("Fehler beim Freigeben ❌");
@@ -131,7 +132,7 @@ export default function MeineAbrechnungen() {
                           <span className="text-gray-400 italic">Noch nicht verfügbar</span>
                         )}
                       </td>
-                      {eintrag.status === "warten-auf-freigabe" && (
+                      {eintrag.status === ABRECHNUNG_STATUS[3] && (
   <td className="p-2">
     <Button size="sm" className="text-xs px-2 py-1" onClick={() => freigeben(eintrag.id)}>
       ✅ Freigeben?

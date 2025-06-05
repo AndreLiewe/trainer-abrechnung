@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 dayjs.locale("de");
+import { ABRECHNUNG_STATUS } from "@/lib/constants";
 
 type Satz = {
   funktion: string;
@@ -148,7 +149,7 @@ useEffect(() => {
     const { data } = await supabase
       .from("monatsabrechnungen")
       .select("monat,jahr,trainername")
-      .in("status", ["erstellt", "warten-auf-freigabe", "offen", "bezahlt"])
+      .in("status", ABRECHNUNG_STATUS)
 
     if (data) {
       const keyset = new Set<string>(

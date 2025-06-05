@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { generateTrainerPDF } from "@/lib/pdf/generateTrainerPDF";
 import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
+import { ABRECHNUNG_STATUS } from "@/lib/constants";
 
 
 export const dynamic = "force-dynamic";
@@ -135,7 +136,7 @@ const pdfBuffer = await generateTrainerPDF({
       trainername,
       monat,
       jahr,
-      status: "erstellt",
+      status: ABRECHNUNG_STATUS[1],
       pdf_url: publicUrl,
       summe,
       erstell_am: new Date().toISOString(),
