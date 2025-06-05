@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Trainer-Abrechnung ist eine Webanwendung zur Verwaltung von Abrechnungen für Trainer. Das Projekt basiert auf [Next.js](https://nextjs.org) und wurde mit [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app) gestartet.
 
 ## Getting Started
 
