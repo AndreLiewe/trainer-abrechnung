@@ -2,14 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { capitalize } from "@/lib/utils/capitalize";
-import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
-import { pruefeKonflikte } from "@/lib/utils/pruefeKonflikte";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { SPARTEN } from "@/lib/constants";
 import { useRouter } from "next/navigation";
