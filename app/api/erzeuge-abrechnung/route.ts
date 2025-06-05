@@ -129,15 +129,19 @@ const pdfBuffer = await generateTrainerPDF({
     const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/pdfs/${filename}`;
     console.log("[DEBUG] PDF URL:", publicUrl);
 
-    const { error: insertError } = await supabaseAdmin.from("monatsabrechnungen").upsert([{
-      trainername,
-      monat,
-      jahr,
-      status: "erstellt",
-      pdf_url: publicUrl,
-      summe,
-      erstell_am: new Date().toISOString(),
-    }]);
+    const { error: insertError } = await supabaseAdmin
+      .from("monatsabrechnungen")
+      .upsert([
+        {
+          trainername,
+          monat,
+          jahr,
+          status: "erstellt",
+          pdf_url: publicUrl,
+          summe,
+          erstellt_am: new Date().toISOString(),
+        },
+      ]);
 
     if (insertError) {
       console.error("[UPSERT-ERROR]", insertError.message);
