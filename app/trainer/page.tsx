@@ -20,6 +20,7 @@ import { format, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { SPARTEN } from "@/lib/constants";
 
 type Abrechnungseintrag = {
   id: string;
@@ -177,12 +178,11 @@ export default function TrainerAbrechnung() {
                 <Select value={formData.sparte} onValueChange={(val) => setFormData({ ...formData, sparte: val })}>
                   <SelectTrigger><SelectValue placeholder="Sparte wählen" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Judo">Judo</SelectItem>
-                    <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-                    <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-                    <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-                    <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-                    <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+                    {SPARTEN.map((sparte) => (
+                      <SelectItem key={sparte} value={sparte}>
+                        {sparte}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -11,6 +11,7 @@ import { capitalize } from "@/lib/utils/capitalize";
 import { berechneVerguetung } from "@/lib/utils/berechneVerguetung";
 import { pruefeKonflikte } from "@/lib/utils/pruefeKonflikte";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { SPARTEN } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
@@ -214,12 +215,11 @@ useEffect(() => {
         <Select value={editEntry.sparte} onValueChange={(val) => setEditEntry({ ...editEntry, sparte: val })}>
   <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
   <SelectContent>
-    <SelectItem value="Judo">Judo</SelectItem>
-    <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-    <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-    <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-    <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-    <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+    {SPARTEN.map((sparte) => (
+      <SelectItem key={sparte} value={sparte}>
+        {sparte}
+      </SelectItem>
+    ))}
   </SelectContent>
 </Select>
         <Input type="time" value={editEntry.beginn} onChange={(e) => setEditEntry({ ...editEntry, beginn: e.target.value })} />
@@ -285,12 +285,11 @@ useEffect(() => {
             <SelectTrigger><SelectValue placeholder="Alle Sparten" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="alle">Alle</SelectItem>
-              <SelectItem value="Judo">Judo</SelectItem>
-              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+              {SPARTEN.map((sparte) => (
+                <SelectItem key={sparte} value={sparte}>
+                  {sparte}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -424,12 +423,11 @@ const key = `${e.trainername}_${monat}_${jahr}`;
           <Select value={newEntry.sparte} onValueChange={(val) => handleNewChange("sparte", val)}>
             <SelectTrigger><SelectValue placeholder="Sparte" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="Judo">Judo</SelectItem>
-              <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-              <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-              <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
-              <SelectItem value="Leistungsturnen">Leistungsturnen</SelectItem>
-              <SelectItem value="Turntraining im Parcours">Turntraining im Parcours</SelectItem>
+              {SPARTEN.map((sparte) => (
+                <SelectItem key={sparte} value={sparte}>
+                  {sparte}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Input type="time" placeholder="Beginn" value={newEntry.beginn} onChange={(e) => handleNewChange("beginn", e.target.value)} />
