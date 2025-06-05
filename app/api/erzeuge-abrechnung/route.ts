@@ -28,7 +28,9 @@ export async function POST(req: Request) {
     console.log("[DEBUG] Eingangsdaten:", trainername, monat, jahr);
 
     const von = `${jahr}-${String(monat).padStart(2, "0")}-01`;
-    const bis = `${jahr}-${String(monat + 1).padStart(2, "0")}-01`;
+    const bisDate = new Date(Number(jahr), Number(monat), 1);
+    bisDate.setMonth(bisDate.getMonth() + 1);
+    const bis = bisDate.toISOString().split("T")[0];
 
    // 1. Normale Einträge
 const { data: eintraegeRaw, error: err1 } = await supabaseAdmin
