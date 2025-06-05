@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { SPARTEN } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -192,10 +193,11 @@ useEffect(() => {
         <Select value={formData.sparte} onValueChange={(val) => setFormData({ ...formData, sparte: val })}>
           <SelectTrigger><SelectValue placeholder="Sparte wählen" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="Judo">Judo</SelectItem>
-            <SelectItem value="Kinderturnen">Kinderturnen</SelectItem>
-            <SelectItem value="Zirkeltraining">Zirkeltraining</SelectItem>
-            <SelectItem value="Eltern-Kind-Turnen">Eltern-Kind-Turnen</SelectItem>
+            {SPARTEN.map((sparte) => (
+              <SelectItem key={sparte} value={sparte}>
+                {sparte}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
