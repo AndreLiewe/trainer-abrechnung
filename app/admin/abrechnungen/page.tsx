@@ -9,6 +9,7 @@ import toast, { Toaster } from "react-hot-toast";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 dayjs.locale("de");
+import { MONTH_NAMES_DE, generateYearRange } from "@/lib/utils/dateHelpers";
 
 
 interface Abrechnung {
@@ -29,6 +30,8 @@ interface Abrechnung {
 export default function AdminAbrechnungenPage() {
   const [abrechnungen, setAbrechnungen] = useState<Abrechnung[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const YEAR_OPTIONS = generateYearRange(1, 1);
 
   const [sortField, setSortField] = useState<"monat" | "jahr" | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
@@ -173,8 +176,8 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterMonat?.toString() || ""} onValueChange={(v) => setFilterMonat(Number(v))}>
       <SelectTrigger><SelectValue placeholder="Alle Monate" /></SelectTrigger>
       <SelectContent>
-        {[...Array(12)].map((_, i) => (
-  <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
+        {MONTH_NAMES_DE.map((name, i) => (
+  <SelectItem key={i + 1} value={(i + 1).toString()}>{name}</SelectItem>
 ))}
 
 
@@ -186,7 +189,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <Select value={filterJahr?.toString() || ""} onValueChange={(v) => setFilterJahr(Number(v))}>
       <SelectTrigger><SelectValue placeholder="Alle Jahre" /></SelectTrigger>
       <SelectContent>
-        {[2024, 2025].map((year) => (
+        {YEAR_OPTIONS.map((year) => (
           <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
         ))}
       </SelectContent>
@@ -257,7 +260,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
 
                 <tr key={a.id} className="border-b hover:bg-gray-50">
                   <td>{a.trainername}</td>
-                  <td>{a.monat}</td>
+                  <td>{MONTH_NAMES_DE[a.monat - 1]}</td>
                   <td>{a.jahr}</td>
                   <td>{a.summe != null ? a.summe.toFixed(2) : "-"}</td>
                   <td>
@@ -327,8 +330,8 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
             <Select value={selectedMonat.toString()} onValueChange={(v) => setSelectedMonat(Number(v))}>
               <SelectTrigger><SelectValue placeholder="Monat" /></SelectTrigger>
               <SelectContent>
-                {[...Array(12)].map((_, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
+                {MONTH_NAMES_DE.map((name, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>{name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -338,7 +341,7 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
             <Select value={selectedJahr.toString()} onValueChange={(v) => setSelectedJahr(Number(v))}>
               <SelectTrigger><SelectValue placeholder="Jahr" /></SelectTrigger>
               <SelectContent>
-                {[2024, 2025].map((year) => (
+                {YEAR_OPTIONS.map((year) => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
               </SelectContent>
