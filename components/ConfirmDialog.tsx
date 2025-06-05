@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,7 +17,7 @@ const ConfirmContext = createContext<ConfirmFunction | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
-  const [resolver, setResolver] = useState<(value: boolean) => void>();
+  const [resolver, setResolver] = useState<((value: boolean) => void) | undefined>();
 
   const confirm: ConfirmFunction = (opts) => {
     return new Promise<boolean>((resolve) => {
@@ -31,6 +33,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 
   const handleClose = (result: boolean) => {
     if (resolver) resolver(result);
+    setResolver(undefined);
     setOptions(null);
   };
 
