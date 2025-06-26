@@ -81,7 +81,7 @@ export default function AdminGruppenPage() {
                           fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
                         }}
                       >
-                        Auf "Mitglied" setzen
+                        Auf &quot;Mitglied&quot; setzen
                       </Button>
                     </td>
                   </tr>
