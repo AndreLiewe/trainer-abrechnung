@@ -55,7 +55,9 @@ export default function StartSeite() {
           <Button onClick={() => router.push("/trainer/abrechnungen")}>
   📄 Meine Abrechnungen
 </Button>
-
+          <Button onClick={() => router.push("/trainer/gruppen")}>
+            👥 Meine Gruppen
+          </Button>
           {isAdmin && (
             <Button onClick={() => router.push("/admin")} variant="secondary">
               🧑‍💼 Admin-Dashboard

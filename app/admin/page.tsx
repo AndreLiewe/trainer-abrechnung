@@ -312,7 +312,9 @@ useEffect(() => {
   <Button variant="default" onClick={() => router.push("/admin/korrekturen")}>
   ✏️ Korrekturen verwalten
 </Button>
-
+  <Button variant="default" onClick={() => router.push("/admin/gruppen")}>
+    👥 Gruppenverwaltung
+  </Button>
 </div>
 
     </div>
