@@ -16,7 +16,7 @@ export default function AdminGruppenPage() {
   const [gruppen, setGruppen] = useState<Gruppe[]>([]);
   const [selectedGruppe, setSelectedGruppe] = useState<Gruppe | null>(null);
   const [mitglieder, setMitglieder] = useState<Mitglied[]>([]);
-  const [kommentar, setKommentar] = useState("");
+  const [kommentare, setKommentare] = useState<Record<string, string>>({});
 const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -49,10 +49,14 @@ const [isAdmin, setIsAdmin] = useState(false);
   }, [selectedGruppe]);
 
   const handleKommentar = async (mitgliedId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
-    await addComment(mitgliedId, user.email!, kommentar);
-    setKommentar("");
+    const text = kommentare[mitgliedId];
+    if (!text) return;
+    await addComment(mitgliedId, user.email!, text);
+    setKommentare((prev) => ({ ...prev, [mitgliedId]: "" }));
   };
 
   return (
@@ -82,6 +86,7 @@ const [isAdmin, setIsAdmin] = useState(false);
                   <th className="p-2">Name</th>
                   <th className="p-2">Status</th>
                   <th className="p-2">Aktion</th>
+                  <th className="p-2">Kommentar</th>
                 </tr>
               </thead>
               <tbody>
@@ -95,13 +100,33 @@ const [isAdmin, setIsAdmin] = useState(false);
                       <Button
                         size="sm"
                         onClick={async () => {
-                          const { data: { user } } = await supabase.auth.getUser();
+                          const {
+                            data: { user },
+                          } = await supabase.auth.getUser();
                           if (!user) return;
-                          await updateMitglied(m.id, { mitgliedsstatus: "Mitglied" }, user.email!);
+                          await updateMitglied(
+                            m.id,
+                            { mitgliedsstatus: "Mitglied" },
+                            user.email!
+                          );
                           fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
                         }}
                       >
                         Auf &quot;Mitglied&quot; setzen
+                      </Button>
+                    </td>
+                     <td className="p-2 space-y-2">
+                      <Textarea
+                        value={kommentare[m.id] || ""}
+                        onChange={(e) =>
+                          setKommentare((prev) => ({
+                            ...prev,
+                            [m.id]: e.target.value,
+                          }))
+                        }
+                      />
+                      <Button size="sm" onClick={() => handleKommentar(m.id)}>
+                        Speichern
                       </Button>
                     </td>
                   </tr>
@@ -109,11 +134,7 @@ const [isAdmin, setIsAdmin] = useState(false);
               </tbody>
             </table>
 
-            <div className="space-y-2">
-              <h3 className="font-semibold">Kommentar hinzufügen</h3>
-              <Textarea value={kommentar} onChange={(e) => setKommentar(e.target.value)} />
-              <Button onClick={() => handleKommentar(selectedGruppe.id)}>Speichern</Button>
-            </div>
+    
           </div>
         )}
       </div>
