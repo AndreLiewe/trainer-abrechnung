@@ -27,8 +27,9 @@ export async function pruefeGruppenWechsel() {
   }
 
   for (const eintrag of data) {
-    const mitglied = eintrag.mitglieder;
-    const gruppe = eintrag.gruppen;
+    const mitglied = eintrag.mitglieder as any;
+    const rawGruppe = eintrag.gruppen as any;
+    const gruppe = Array.isArray(rawGruppe) ? rawGruppe[0] : rawGruppe;
 
     if (!mitglied || !gruppe || gruppe.altersgrenze_max === null) {
       continue;
