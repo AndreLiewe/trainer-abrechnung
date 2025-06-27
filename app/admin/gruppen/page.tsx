@@ -17,7 +17,24 @@ export default function AdminGruppenPage() {
   const [selectedGruppe, setSelectedGruppe] = useState<Gruppe | null>(null);
   const [mitglieder, setMitglieder] = useState<Mitglied[]>([]);
   const [kommentar, setKommentar] = useState("");
+const [isAdmin, setIsAdmin] = useState(false);
 
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.email) {
+        const { data, error } = await supabase
+          .from("admin_users")
+          .select("email")
+          .eq("email", user.email)
+          .single();
+        if (data && !error) setIsAdmin(true);
+      }
+    };
+    checkUser();
+  }, []);
   useEffect(() => {
     const loadGroups = async () => {
       const { data } = await supabase.from("gruppen").select("*");
@@ -40,7 +57,10 @@ export default function AdminGruppenPage() {
 
   return (
     <RequireAuth>
-      <div className="p-6 space-y-4">
+      {!isAdmin ? (
+        <div className="p-6 text-center">Kein Zugriff ❌</div>
+      ) : (
+        <div className="p-6 space-y-4">
         <h1 className="text-2xl font-bold">Gruppenverwaltung</h1>
         <div className="flex gap-2">
           {gruppen.map((g) => (
@@ -97,6 +117,7 @@ export default function AdminGruppenPage() {
           </div>
         )}
       </div>
+      )}
     </RequireAuth>
   );
 }
