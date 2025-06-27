@@ -7,7 +7,9 @@ import {
   setProbetrainingBegonnen,
   Gruppe,
   Mitglied,
+  setWechselErforderlich,
 } from "@/lib/groupManagement";
+import berechneAlter from "@/lib/utils/berechneAlter";
 import { Button } from "@/components/ui/button";
 import RequireAuth from "@/components/RequireAuth";
 
@@ -30,6 +32,19 @@ export default function TrainerGruppenPage() {
     if (!selectedGruppe) return;
     fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
   }, [selectedGruppe]);
+
+   useEffect(() => {
+    if (!selectedGruppe) return;
+    mitglieder.forEach((m) => {
+      const alter = berechneAlter(m.geburtsdatum);
+      const wechsel =
+        (selectedGruppe.altersgrenze_min !== null &&
+          alter < selectedGruppe.altersgrenze_min) ||
+        (selectedGruppe.altersgrenze_max !== null &&
+          alter > selectedGruppe.altersgrenze_max);
+      setWechselErforderlich(m.id, selectedGruppe.id, wechsel).catch(() => {});
+    });
+  }, [mitglieder, selectedGruppe]);
 
   const handleProbetraining = async (mitgliedId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -60,24 +75,37 @@ export default function TrainerGruppenPage() {
               <thead className="bg-gray-100">
                 <tr>
                   <th className="p-2">Name</th>
+                  <th className="p-2">Alter</th>
                   <th className="p-2">Status</th>
                   <th className="p-2">Aktion</th>
                 </tr>
               </thead>
               <tbody>
-                {mitglieder.map((m) => (
-                  <tr key={m.id} className="border-t">
-                    <td className="p-2">{m.vorname} {m.nachname}</td>
-                    <td className="p-2">{m.mitgliedsstatus}</td>
-                    <td className="p-2">
-                      {!m.status_seit && (
-                        <Button size="sm" onClick={() => handleProbetraining(m.id)}>
-                          Probetraining begonnen
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                 {mitglieder.map((m) => {
+                  const alter = berechneAlter(m.geburtsdatum);
+                  const wechsel =
+                    (selectedGruppe?.altersgrenze_min !== null &&
+                      alter < selectedGruppe.altersgrenze_min) ||
+                    (selectedGruppe?.altersgrenze_max !== null &&
+                      alter > selectedGruppe.altersgrenze_max);
+                  return (
+                    <tr
+                      key={m.id}
+                      className={`border-t ${wechsel ? "bg-red-50" : ""}`}
+                    >
+                      <td className="p-2">{m.vorname} {m.nachname}</td>
+                      <td className="p-2">{alter}</td>
+                      <td className="p-2">{m.mitgliedsstatus}</td>
+                      <td className="p-2">
+                        {!m.status_seit && (
+                          <Button size="sm" onClick={() => handleProbetraining(m.id)}>
+                            Probetraining begonnen
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

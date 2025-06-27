@@ -132,4 +132,17 @@ export async function setProbetrainingBegonnen(
     { mitgliedsstatus: "Probetraining begonnen", status_seit: new Date().toISOString() },
     editorEmail
   );
+
+  }
+export async function setWechselErforderlich(
+  mitgliedId: string,
+  gruppenId: string,
+  wechsel_erforderlich: boolean
+) {
+  const { error } = await supabase
+    .from("mitglied_gruppen")
+    .update({ wechsel_erforderlich })
+    .eq("mitglied_id", mitgliedId)
+    .eq("gruppen_id", gruppenId);
+  if (error) throw error;
 }
