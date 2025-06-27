@@ -1,6 +1,25 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { differenceInYears, isValid } from "date-fns";
 
+interface Mitglied {
+  id: string;
+  vorname: string;
+  nachname: string;
+  geburtsdatum: string;
+}
+
+interface Gruppe {
+  id: string;
+  name: string;
+  altersgrenze_max: number | null;
+}
+
+interface MitgliedGruppeRow {
+  id: string;
+  mitglieder: Mitglied | null;
+  gruppen: Gruppe | Gruppe[] | null;
+}
+
 /**
  * Durchsucht alle Einträge der Tabelle `mitglied_gruppen` und
  * prüft, ob das jeweilige Mitglied die Altersgrenze der Gruppe überschreitet.
@@ -26,10 +45,14 @@ export async function pruefeGruppenWechsel() {
     return;
   }
 
-  for (const eintrag of data) {
-    const mitglied = eintrag.mitglieder as any;
-    const rawGruppe = eintrag.gruppen as any;
-    const gruppe = Array.isArray(rawGruppe) ? rawGruppe[0] : rawGruppe;
+  const rows = data as MitgliedGruppeRow[];
+
+  for (const eintrag of rows) {
+    const gruppeData = Array.isArray(eintrag.gruppen)
+      ? eintrag.gruppen[0]
+      : eintrag.gruppen;
+    const mitglied = eintrag.mitglieder;
+    const gruppe = gruppeData;
 
     if (!mitglied || !gruppe || gruppe.altersgrenze_max === null) {
       continue;
