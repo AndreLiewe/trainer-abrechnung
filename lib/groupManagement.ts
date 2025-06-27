@@ -18,6 +18,8 @@ export type Mitglied = {
   status_seit: string | null;
   bereit_für_wechsel: boolean | null;
   wechsel_anmerkung: string | null;
+  wechsel_geprüft: boolean | null;
+  wechsel_erforderlich: boolean | null;
   erstellt_am: string;
 };
 
@@ -35,10 +37,18 @@ export async function fetchTrainerGroups(trainerEmail: string) {
 export async function fetchGroupMembers(gruppenId: string) {
   const { data, error } = await supabase
     .from("mitglied_gruppen")
-    .select("mitglieder(*)")
+     .select(
+      '"wechsel_geprüft","bereit_für_wechsel","wechsel_anmerkung","wechsel_erforderlich",mitglieder(*)'
+    )
     .eq("gruppen_id", gruppenId);
   if (error) throw error;
-  return (data ?? []).map((m) => m.mitglieder as unknown as Mitglied);
+  return (data ?? []).map((m) => ({
+    ...(m.mitglieder as unknown as Mitglied),
+    wechsel_geprüft: m.wechsel_geprüft as boolean | null,
+    bereit_für_wechsel: m.bereit_für_wechsel as boolean | null,
+    wechsel_anmerkung: m.wechsel_anmerkung as string | null,
+    wechsel_erforderlich: m.wechsel_erforderlich as boolean | null,
+  }));
 }
 
 export async function addComment(
