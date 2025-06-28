@@ -7,6 +7,8 @@ export type Gruppe = {
   erstellt_am: string;
 };
 
+import type { Mitgliedsstatus } from "./constants";
+
 export type Mitglied = {
   id: string;
   vorname: string;
@@ -14,7 +16,7 @@ export type Mitglied = {
   geburtsdatum: string;
   geschlecht: string | null;
   notfalltelefon: string | null;
-  mitgliedsstatus: string | null;
+  mitgliedsstatus: Mitgliedsstatus | null;
   status_seit: string | null;
   bereit_für_wechsel: boolean | null;
   wechsel_anmerkung: string | null;
@@ -129,7 +131,10 @@ export async function setProbetrainingBegonnen(
 ) {
   return updateMitglied(
     mitgliedId,
-    { mitgliedsstatus: "Probetraining begonnen", status_seit: new Date().toISOString() },
+    {
+      mitgliedsstatus: "Probetraining begonnen",
+      status_seit: new Date().toISOString(),
+    },
     editorEmail
   );
 
@@ -205,7 +210,7 @@ export async function createMitglied(
       geburtsdatum: data.geburtsdatum,
       geschlecht: data.geschlecht ?? null,
       notfalltelefon: data.notfalltelefon ?? null,
-      mitgliedsstatus: data.mitgliedsstatus ?? null,
+      mitgliedsstatus: data.mitgliedsstatus ?? "Probetraining eingeladen",
     })
     .select()
     .single();

@@ -13,9 +13,11 @@ import berechneAlter from "@/lib/utils/berechneAlter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import RequireAuth from "@/components/RequireAuth";
+import { MITGLIEDSSTATUS } from "@/lib/constants";
 
 export default function AdminGruppenPage() {
   const [gruppen, setGruppen] = useState<Gruppe[]>([]);
@@ -233,7 +235,7 @@ const [isAdmin, setIsAdmin] = useState(false);
                   <th className="p-2">Name</th>
                   <th className="p-2">Alter</th>
                   <th className="p-2">Status</th>
-                  <th className="p-2">Aktion</th>
+                  <th className="p-2">Seit</th>
                   <th className="p-2">Kommentar</th>
                 </tr>
               </thead>
@@ -254,27 +256,38 @@ const [isAdmin, setIsAdmin] = useState(false);
                         {m.vorname} {m.nachname}
                       </td>
                       <td className="p-2">{alter}</td>
-                      <td className="p-2">{m.mitgliedsstatus}</td>
                       <td className="p-2">
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          const {
-                            data: { user },
-                          } = await supabase.auth.getUser();
-                          if (!user) return;
-                          await updateMitglied(
-                            m.id,
-                            { mitgliedsstatus: "Mitglied" },
-                            user.email!
-                          );
-                          fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
-                        }}
-                      >
-                        Auf &quot;Mitglied&quot; setzen
-                      </Button>
-                    </td>
-                     <td className="p-2 space-y-2">
+                      <Select
+                          value={m.mitgliedsstatus || ""}
+                          onValueChange={async (val) => {
+                            const {
+                              data: { user },
+                            } = await supabase.auth.getUser();
+                            if (!user) return;
+                            await updateMitglied(
+                              m.id,
+                              { mitgliedsstatus: val as any },
+                              user.email!
+                            );
+                            fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
+                          }}
+                        >
+                          <SelectTrigger size="sm">
+                            <SelectValue placeholder="Status wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MITGLIEDSSTATUS.map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-2">
+                        {m.status_seit
+                          ? new Date(m.status_seit).toLocaleDateString()
+                          : "-"}
+                      </td>
+                      <td className="p-2 space-y-2">
                       <Textarea
                         value={kommentare[m.id] || ""}
                         onChange={(e) =>
