@@ -66,6 +66,24 @@ export async function addComment(
   });
 }
 
+export type Kommentar = {
+  id: string;
+  mitglied_id: string;
+  autor_email: string | null;
+  kommentar: string;
+  zeitpunkt: string;
+};
+
+export async function fetchKommentare(mitgliedId: string) {
+  const { data, error } = await supabase
+    .from("kommentare")
+    .select("*")
+    .eq("mitglied_id", mitgliedId)
+    .order("zeitpunkt", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Kommentar[];
+}
+
 async function logChange(
   tabelle: string,
   datensatzId: string,

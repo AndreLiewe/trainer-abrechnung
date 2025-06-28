@@ -5,6 +5,8 @@ import {
   fetchGroupMembers,
   updateMitglied,
   addComment,
+  fetchKommentare,
+  Kommentar,
   Gruppe,
   Mitglied,
   setWechselErforderlich,
@@ -24,6 +26,7 @@ export default function AdminGruppenPage() {
   const [selectedGruppe, setSelectedGruppe] = useState<Gruppe | null>(null);
   const [mitglieder, setMitglieder] = useState<Mitglied[]>([]);
   const [kommentare, setKommentare] = useState<Record<string, string>>({});
+  const [historie, setHistorie] = useState<Record<string, Kommentar[]>>({});
 const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -60,7 +63,18 @@ const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!selectedGruppe) return;
-    fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
+    const load = async () => {
+      const members = await fetchGroupMembers(selectedGruppe.id);
+      setMitglieder(members);
+      const hist: Record<string, Kommentar[]> = {};
+      await Promise.all(
+        members.map(async (m) => {
+          hist[m.id] = await fetchKommentare(m.id);
+        })
+      );
+      setHistorie(hist);
+    };
+    load();
   }, [selectedGruppe]);
   
   useEffect(() => {
@@ -99,6 +113,8 @@ const [isAdmin, setIsAdmin] = useState(false);
     if (!text) return;
     await addComment(mitgliedId, user.email!, text);
     setKommentare((prev) => ({ ...prev, [mitgliedId]: "" }));
+    const list = await fetchKommentare(mitgliedId);
+    setHistorie((prev) => ({ ...prev, [mitgliedId]: list }));
   };
 
    const handleNew = () => {
@@ -269,7 +285,15 @@ const [isAdmin, setIsAdmin] = useState(false);
                               { mitgliedsstatus: val as any },
                               user.email!
                             );
-                            fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
+                            const members = await fetchGroupMembers(selectedGruppe.id);
+                            setMitglieder(members);
+                            const hist: Record<string, Kommentar[]> = {};
+                            await Promise.all(
+                              members.map(async (m2) => {
+                                hist[m2.id] = await fetchKommentare(m2.id);
+                              })
+                            );
+                            setHistorie(hist);
                           }}
                         >
                           <SelectTrigger size="sm">
@@ -288,19 +312,24 @@ const [isAdmin, setIsAdmin] = useState(false);
                           : "-"}
                       </td>
                       <td className="p-2 space-y-2">
-                      <Textarea
-                        value={kommentare[m.id] || ""}
-                        onChange={(e) =>
-                          setKommentare((prev) => ({
-                            ...prev,
-                            [m.id]: e.target.value,
-                          }))
-                        }
-                      />
-                      <Button size="sm" onClick={() => handleKommentar(m.id)}>
-                        Speichern
-                      </Button>
-                    </td>
+                       {historie[m.id]?.map((k) => (
+                          <div key={k.id} className="text-xs text-gray-600">
+                            {new Date(k.zeitpunkt).toLocaleString()} - {k.autor_email ?? ""}: {k.kommentar}
+                          </div>
+                        ))}
+                        <Textarea
+                          value={kommentare[m.id] || ""}
+                          onChange={(e) =>
+                            setKommentare((prev) => ({
+                              ...prev,
+                              [m.id]: e.target.value,
+                            }))
+                          }
+                        />
+                        <Button size="sm" onClick={() => handleKommentar(m.id)}>
+                          Speichern
+                        </Button>
+                      </td>
                   </tr>
                   );
                 })}
