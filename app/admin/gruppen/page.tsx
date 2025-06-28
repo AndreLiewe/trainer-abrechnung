@@ -250,6 +250,8 @@ const [isAdmin, setIsAdmin] = useState(false);
                 <tr>
                   <th className="p-2">Name</th>
                   <th className="p-2">Alter</th>
+                  <th className="p-2">Geschlecht</th>
+                  <th className="p-2">Notfalltelefon</th>
                   <th className="p-2">Status</th>
                   <th className="p-2">Seit</th>
                   <th className="p-2">Kommentar</th>
@@ -272,8 +274,10 @@ const [isAdmin, setIsAdmin] = useState(false);
                         {m.vorname} {m.nachname}
                       </td>
                       <td className="p-2">{alter}</td>
+                      <td className="p-2">{m.geschlecht ?? "-"}</td>
+                      <td className="p-2">{m.notfalltelefon ?? "-"}</td>
                       <td className="p-2">
-                      <Select
+                        <Select
                           value={m.mitgliedsstatus || ""}
                           onValueChange={async (val) => {
                             const {

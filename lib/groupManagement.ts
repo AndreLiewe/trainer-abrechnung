@@ -41,8 +41,8 @@ export async function fetchTrainerGroups(trainerEmail: string) {
 export async function fetchGroupMembers(gruppenId: string): Promise<MitgliedMitGruppen[]> {
   const { data, error } = await supabase
     .from("mitglied_gruppen")
-     .select(
-      '"wechsel_geprüft","bereit_für_wechsel","wechsel_anmerkung","wechsel_erforderlich",mitglieder(*, mitglied_gruppen(gruppen_id))'
+    .select(
+      '"wechsel_geprüft","bereit_für_wechsel","wechsel_anmerkung","wechsel_erforderlich",mitglieder(id,vorname,nachname,geburtsdatum,geschlecht,notfalltelefon,mitgliedsstatus,status_seit, mitglied_gruppen(gruppen_id))'
     )
     .eq("gruppen_id", gruppenId);
   if (error) throw error;

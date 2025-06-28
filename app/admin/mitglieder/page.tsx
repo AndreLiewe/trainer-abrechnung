@@ -57,7 +57,9 @@ export default function AdminMitgliederPage() {
     const load = async () => {
       const { data } = await supabase
         .from("mitglieder")
-        .select("*, mitglied_gruppen(gruppen_id)");
+        .select(
+          "id, vorname, nachname, geburtsdatum, geschlecht, notfalltelefon, mitgliedsstatus, status_seit, mitglied_gruppen(gruppen_id)"
+        );
       const list = ((data as MitgliedWithGroup[]) || []).map(
         ({ mitglied_gruppen, ...rest }) => ({
           ...rest,
@@ -185,6 +187,8 @@ export default function AdminMitgliederPage() {
                   <tr>
                     <th className="p-2">Name</th>
                     <th className="p-2">Geburtsdatum</th>
+                    <th className="p-2">Geschlecht</th>
+                    <th className="p-2">Notfalltelefon</th>
                     <th className="p-2">Gruppe</th>
                     <th className="p-2">Aktion</th>
                   </tr>
@@ -196,6 +200,8 @@ export default function AdminMitgliederPage() {
                         {m.vorname} {m.nachname}
                       </td>
                       <td className="p-2">{m.geburtsdatum}</td>
+                      <td className="p-2">{m.geschlecht ?? "-"}</td>
+                      <td className="p-2">{m.notfalltelefon ?? "-"}</td>
                       <td className="p-2">
                         <div className="flex flex-wrap gap-2">
                           {gruppen.map((g) => (
