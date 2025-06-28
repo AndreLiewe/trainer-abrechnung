@@ -315,6 +315,9 @@ useEffect(() => {
   <Button variant="default" onClick={() => router.push("/admin/gruppen")}>
     👥 Gruppenverwaltung
   </Button>
+  <Button variant="default" onClick={() => router.push("/admin/mitglieder")}>
+    👤 Mitgliederverwaltung
+  </Button>
 </div>
 
     </div>

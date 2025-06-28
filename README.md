@@ -13,6 +13,10 @@ pnpm dev
 # or
 bun dev
 ```
+## Linting
+
+Run `npm run lint` to check the code with ESLint. The rules are defined in `eslint.config.mjs`.
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
