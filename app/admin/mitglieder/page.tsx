@@ -24,6 +24,10 @@ interface MitgliedRow extends Mitglied {
   gruppen_id: string | null;
 }
 
+type MitgliedWithGroup = Mitglied & {
+  mitglied_gruppen: { gruppen_id: string }[] | null;
+};
+
 export default function AdminMitgliederPage() {
   const [mitglieder, setMitglieder] = useState<MitgliedRow[]>([]);
   const [gruppen, setGruppen] = useState<Gruppe[]>([]);
@@ -59,10 +63,12 @@ export default function AdminMitgliederPage() {
       const { data } = await supabase
         .from("mitglieder")
         .select("*, mitglied_gruppen(gruppen_id)");
-      const list = (data || []).map((m: any) => ({
-        ...(m as Mitglied),
-        gruppen_id: m.mitglied_gruppen?.[0]?.gruppen_id ?? null,
-      }));
+      const list = ((data as MitgliedWithGroup[]) || []).map(
+        ({ mitglied_gruppen, ...rest }) => ({
+          ...rest,
+          gruppen_id: mitglied_gruppen?.[0]?.gruppen_id ?? null,
+        })
+      );
       setMitglieder(list);
       const { data: g } = await supabase.from("gruppen").select("*");
       setGruppen(g || []);
