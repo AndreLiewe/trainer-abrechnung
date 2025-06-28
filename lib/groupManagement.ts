@@ -173,7 +173,7 @@ export async function updateMitgliedGruppe(
     .single();
   if (error) throw error;
 
-  const newRecord = data as typeof updates & { [key: string]: any };
+  const newRecord = data as typeof updates & Record<string, unknown>;
   if (oldRecord) {
     for (const key of Object.keys(updates)) {
       const oldVal = oldRecord[key] as unknown as string | null;

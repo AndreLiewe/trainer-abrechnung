@@ -11,7 +11,9 @@ import {
 } from "@/lib/groupManagement";
 import berechneAlter from "@/lib/utils/berechneAlter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/components/ConfirmDialog";
 import RequireAuth from "@/components/RequireAuth";
 
 export default function AdminGruppenPage() {
@@ -20,6 +22,13 @@ export default function AdminGruppenPage() {
   const [mitglieder, setMitglieder] = useState<Mitglied[]>([]);
   const [kommentare, setKommentare] = useState<Record<string, string>>({});
 const [isAdmin, setIsAdmin] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    beschreibung: "",
+    altersgrenze_min: "",
+    altersgrenze_max: "",
+  });
+  const confirm = useConfirm();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -49,6 +58,19 @@ const [isAdmin, setIsAdmin] = useState(false);
     if (!selectedGruppe) return;
     fetchGroupMembers(selectedGruppe.id).then(setMitglieder);
   }, [selectedGruppe]);
+  
+  useEffect(() => {
+    if (!selectedGruppe) {
+      setFormData({ name: "", beschreibung: "", altersgrenze_min: "", altersgrenze_max: "" });
+      return;
+    }
+    setFormData({
+      name: selectedGruppe.name,
+      beschreibung: selectedGruppe.beschreibung || "",
+      altersgrenze_min: selectedGruppe.altersgrenze_min?.toString() || "",
+      altersgrenze_max: selectedGruppe.altersgrenze_max?.toString() || "",
+    });
+  }, [selectedGruppe]);
 
   useEffect(() => {
     if (!selectedGruppe) return;
@@ -75,6 +97,38 @@ const [isAdmin, setIsAdmin] = useState(false);
     setKommentare((prev) => ({ ...prev, [mitgliedId]: "" }));
   };
 
+   const handleNew = () => {
+    setSelectedGruppe(null);
+    setFormData({ name: "", beschreibung: "", altersgrenze_min: "", altersgrenze_max: "" });
+  };
+
+  const handleSave = async () => {
+    const min = formData.altersgrenze_min ? Number(formData.altersgrenze_min) : null;
+    const max = formData.altersgrenze_max ? Number(formData.altersgrenze_max) : null;
+    if (selectedGruppe) {
+      await supabase
+        .from("gruppen")
+        .update({ name: formData.name, beschreibung: formData.beschreibung || null, altersgrenze_min: min, altersgrenze_max: max })
+        .eq("id", selectedGruppe.id);
+    } else {
+      await supabase.from("gruppen").insert({ name: formData.name, beschreibung: formData.beschreibung || null, altersgrenze_min: min, altersgrenze_max: max });
+    }
+    const { data } = await supabase.from("gruppen").select("*");
+    setGruppen(data || []);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedGruppe) return;
+    const ok = await confirm({ message: "Gruppe wirklich löschen?" });
+    if (!ok) return;
+    await supabase.from("gruppen").delete().eq("id", selectedGruppe.id);
+    const { data } = await supabase.from("gruppen").select("*");
+    setGruppen(data || []);
+    setSelectedGruppe(null);
+    setFormData({ name: "", beschreibung: "", altersgrenze_min: "", altersgrenze_max: "" });
+  };
+
+
   return (
     <RequireAuth>
       {!isAdmin ? (
@@ -82,7 +136,7 @@ const [isAdmin, setIsAdmin] = useState(false);
       ) : (
         <div className="p-6 space-y-4">
         <h1 className="text-2xl font-bold">Gruppenverwaltung</h1>
-        <div className="flex gap-2">
+         <div className="flex gap-2 flex-wrap">
           {gruppen.map((g) => (
             <Button
               key={g.id}
@@ -92,6 +146,55 @@ const [isAdmin, setIsAdmin] = useState(false);
               {g.name}
             </Button>
           ))}
+<Button variant="outline" onClick={handleNew}>
+            + Neue Gruppe
+          </Button>
+        </div>
+        <div className="border rounded p-4 space-y-2">
+          <h2 className="text-lg font-semibold">
+            {selectedGruppe ? "Gruppe bearbeiten" : "Neue Gruppe"}
+          </h2>
+          <Input
+            placeholder="Name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+          <Textarea
+            placeholder="Beschreibung"
+            value={formData.beschreibung}
+            onChange={(e) =>
+              setFormData({ ...formData, beschreibung: e.target.value })
+            }
+          />
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder="Mindestalter"
+              value={formData.altersgrenze_min}
+              onChange={(e) =>
+                setFormData({ ...formData, altersgrenze_min: e.target.value })
+              }
+            />
+            <Input
+              type="number"
+              placeholder="Höchstalter"
+              value={formData.altersgrenze_max}
+              onChange={(e) =>
+                setFormData({ ...formData, altersgrenze_max: e.target.value })
+              }
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            {selectedGruppe && (
+              <Button variant="destructive" onClick={handleDelete}>
+                Löschen
+              </Button>
+            )}
+            <Button onClick={handleSave}>
+              {selectedGruppe ? "Speichern" : "Anlegen"}
+            </Button>
+          </div>
+
         </div>
         {selectedGruppe && (
           <div className="space-y-4">
