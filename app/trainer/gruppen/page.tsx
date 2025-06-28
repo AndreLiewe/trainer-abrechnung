@@ -166,6 +166,11 @@ export default function TrainerGruppenPage() {
             </table>
           </div>
         )}
+        <div className="mt-8 text-center">
+          <Button variant="ghost" onClick={() => window.history.back()}>
+            🔙 Zurück
+          </Button>
+        </div>
       </div>
     </RequireAuth>
   );

@@ -49,7 +49,7 @@ export default function EntryList({
               <th>Sparte</th>
               <th>Beginn</th>
               <th>Ende</th>
-              <th>Feld</th>
+              <th className="p-2 text-center">Feld</th>
               <th>Funktion</th>
               <th>Aufbau</th>
               <th>Trainer</th>
@@ -95,7 +95,7 @@ export default function EntryList({
                     <td>{e.sparte}</td>
                     <td>{e.beginn}</td>
                     <td>{e.ende}</td>
-                    <td>{e.hallenfeld}</td>
+                    <td className="p-2 text-center">{e.hallenfeld}</td>
                     <td>{e.funktion}</td>
                     <td>{e.aufbau ? "Ja" : "Nein"}</td>
                     <td>{e.trainername}</td>

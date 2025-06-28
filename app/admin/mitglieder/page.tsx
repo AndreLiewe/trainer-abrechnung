@@ -3,22 +3,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import {
-     Gruppe,
-     Mitglied,
-    moveMitgliedToGruppe,
-    removeMitgliedFromGruppe,
-     createMitglied,
-    deleteMitglied,
+  Gruppe,
+  Mitglied,
+  moveMitgliedToGruppe,
+  removeMitgliedFromGruppe,
+  createMitglied,
+  deleteMitglied,
 } from "@/lib/groupManagement";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import RequireAuth from "@/components/RequireAuth";
 import { useConfirm } from "@/components/ConfirmDialog";
 
@@ -84,16 +77,21 @@ export default function AdminMitgliederPage() {
       !formData.nachname ||
       !formData.geburtsdatum ||
       formData.gruppen_ids.length === 0
-    )
+    ) {
+      alert("Bitte alle Felder ausfüllen und mindestens eine Gruppe auswählen.");
       return;
+    }
+
     const neu = await createMitglied({
       vorname: formData.vorname,
       nachname: formData.nachname,
       geburtsdatum: formData.geburtsdatum,
     });
+
     await Promise.all(
       formData.gruppen_ids.map((gid) => moveMitgliedToGruppe(neu.id, gid))
     );
+
     setMitglieder([...mitglieder, { ...neu, gruppen_ids: formData.gruppen_ids }]);
     setFormData({ vorname: "", nachname: "", geburtsdatum: "", gruppen_ids: [] });
   };
@@ -105,7 +103,7 @@ export default function AdminMitgliederPage() {
     setMitglieder((prev) => prev.filter((m) => m.id !== id));
   };
 
-   const handleToggleGroup = async (
+  const handleToggleGroup = async (
     id: string,
     gruppe: string,
     checked: boolean
@@ -181,51 +179,59 @@ export default function AdminMitgliederPage() {
 
           <div className="space-y-2">
             <h2 className="text-lg font-semibold">Mitglieder</h2>
-            <table className="w-full text-sm border">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-2">Name</th>
-                  <th className="p-2">Geburtsdatum</th>
-                  <th className="p-2">Gruppe</th>
-                  <th className="p-2">Aktion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mitglieder.map((m) => (
-                  <tr key={m.id} className="border-t">
-                    <td className="p-2">
-                      {m.vorname} {m.nachname}
-                    </td>
-                    <td className="p-2">{m.geburtsdatum}</td>
-                    <td className="p-2">
-                      <div className="flex flex-wrap gap-2">
-                        {gruppen.map((g) => (
-                          <label key={g.id} className="flex items-center gap-1">
-                            <input
-                              type="checkbox"
-                              checked={m.gruppen_ids.includes(g.id)}
-                              onChange={(e) =>
-                                handleToggleGroup(m.id, g.id, e.target.checked)
-                              }
-                            />
-                            <span>{g.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(m.id)}
-                      >
-                        Löschen
-                      </Button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-2">Name</th>
+                    <th className="p-2">Geburtsdatum</th>
+                    <th className="p-2">Gruppe</th>
+                    <th className="p-2">Aktion</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {mitglieder.map((m) => (
+                    <tr key={m.id} className="border-t">
+                      <td className="p-2">
+                        {m.vorname} {m.nachname}
+                      </td>
+                      <td className="p-2">{m.geburtsdatum}</td>
+                      <td className="p-2">
+                        <div className="flex flex-wrap gap-2">
+                          {gruppen.map((g) => (
+                            <label key={g.id} className="flex items-center gap-1">
+                              <input
+                                type="checkbox"
+                                checked={m.gruppen_ids.includes(g.id)}
+                                onChange={(e) =>
+                                  handleToggleGroup(m.id, g.id, e.target.checked)
+                                }
+                              />
+                              <span>{g.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-2">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(m.id)}
+                        >
+                          Löschen
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Button variant="ghost" onClick={() => window.history.back()}>
+              🔙 Zurück
+            </Button>
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import dayjs from "dayjs";
@@ -48,6 +49,7 @@ export default function AdminAbrechnungenPage() {
   const [filterJahr, setFilterJahr] = useState<number | null>(null);
 
   const confirm = useConfirm();
+ const router = useRouter();
 
 const gefilterteAbrechnungen = abrechnungen.filter((a) => {
   return (
@@ -162,6 +164,63 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
     <div className="p-6 max-w-5xl mx-auto">
       <Toaster />
       <h1 className="text-2xl font-bold mb-4">📄 Monatsabrechnungen</h1>
+      <div className="flex justify-center gap-4 mb-6">
+        <Button variant="outline" onClick={() => router.push('/start')}>🔙 Zur Startseite</Button>
+        <Button variant="default" onClick={() => router.push('/admin')}>🏠 Admin-Dashboard</Button>
+      </div>
+
+      <div className="mb-6 border-b pb-6">
+        <h2 className="text-lg font-semibold mb-4">Neue Abrechnung erstellen</h2>
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="w-40">
+            <label className="block text-sm mb-1">Trainer</label>
+            <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
+              <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+              <SelectContent>
+                {trainerList.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-32">
+            <label className="block text-sm mb-1">Monat</label>
+            <Select value={selectedMonat.toString()} onValueChange={(v) => setSelectedMonat(Number(v))}>
+              <SelectTrigger><SelectValue placeholder="Monat" /></SelectTrigger>
+              <SelectContent>
+                {MONTH_NAMES_DE.map((name, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-32">
+            <label className="block text-sm mb-1">Jahr</label>
+            <Select value={selectedJahr.toString()} onValueChange={(v) => setSelectedJahr(Number(v))}>
+              <SelectTrigger><SelectValue placeholder="Jahr" /></SelectTrigger>
+              <SelectContent>
+                {YEAR_OPTIONS.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            type="button"
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.preventDefault();
+              if (!selectedTrainer) {
+                toast.error('Bitte Trainer auswählen');
+                return;
+              }
+              erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Wird erstellt...' : 'Abrechnung erstellen'}
+          </Button>
+        </div>
+      </div>
 <div className="flex gap-4 mb-6 flex-wrap">
   <div className="w-40">
     <label className="block text-sm mb-1">Trainer</label>
@@ -315,59 +374,6 @@ const resetAbrechnung = async (trainername: string, monat: number, jahr: number)
 </p>
       </Card>
 
-      <div className="mt-6 border-t pt-6">
-        <h2 className="text-lg font-semibold mb-4">Neue Abrechnung erstellen</h2>
-
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="w-40">
-            <label className="block text-sm mb-1">Trainer</label>
-            <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
-              <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
-              <SelectContent>
-                {trainerList.map((name) => (
-                  <SelectItem key={name} value={name}>{name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-32">
-            <label className="block text-sm mb-1">Monat</label>
-            <Select value={selectedMonat.toString()} onValueChange={(v) => setSelectedMonat(Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Monat" /></SelectTrigger>
-              <SelectContent>
-                {MONTH_NAMES_DE.map((name, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()}>{name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-32">
-            <label className="block text-sm mb-1">Jahr</label>
-            <Select value={selectedJahr.toString()} onValueChange={(v) => setSelectedJahr(Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Jahr" /></SelectTrigger>
-              <SelectContent>
-                {YEAR_OPTIONS.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            type="button"
-            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-              e.preventDefault();
-              if (!selectedTrainer) {
-                toast.error("Bitte Trainer auswählen");
-                return;
-              }
-              erzeugePdf(selectedTrainer, selectedMonat, selectedJahr);
-            }}
-            disabled={loading}
-          >
-            {loading ? "Wird erstellt..." : "Abrechnung erstellen"}
-          </Button>
-        </div>
-      </div>
 
       <div className="mt-8 text-center">
         <Button variant="ghost" onClick={() => window.history.back()}>

@@ -239,18 +239,7 @@ useEffect(() => {
         trainerList={trainerList}
       />
 
-      <EntryList
-        entries={entries}
-        saetze={saetze}
-        sortAscending={sortAscending}
-        setSortAscending={setSortAscending}
-        setEditEntry={setEditEntry}
-        handleDelete={handleDelete}
-        showAbgerechnete={showAbgerechnete}
-        abgerechneteKeys={abgerechneteKeys}
-        ferienDaten={ferienDaten}
-        standardzeiten={standardzeiten}
-      />
+      
 
       <div className="mt-6">
         <h2 className="text-lg font-bold mb-2">Neuen Eintrag hinzufügen</h2>
@@ -303,25 +292,29 @@ useEffect(() => {
       </div>
 
       <div className="mt-8 flex justify-center gap-4">
-  <Button variant="outline" onClick={() => router.push("/start")}>
-    🔙 Zur Startseite
-  </Button>
-  <Button variant="default" onClick={() => router.push("/admin/abrechnungen")}>
-    📄 Monatsabrechnungen
-  </Button>
-  <Button variant="default" onClick={() => router.push("/admin/korrekturen")}>
-  ✏️ Korrekturen verwalten
-</Button>
-  <Button variant="default" onClick={() => router.push("/admin/gruppen")}>
-    👥 Gruppenverwaltung
-  </Button>
-  <Button variant="default" onClick={() => router.push("/admin/mitglieder")}>
-    👤 Mitgliederverwaltung
-  </Button>
-</div>
+   <Button variant="outline" onClick={() => router.push("/start")}>🔙 Zur Startseite</Button>
+        <Button variant="default" onClick={() => router.push("/admin/abrechnungen")}>📄 Monatsabrechnungen</Button>
+        <Button variant="default" onClick={() => router.push("/admin/korrekturen")}>✏️ Korrekturen verwalten</Button>
+        <Button variant="default" onClick={() => router.push("/admin/gruppen")}>👥 Gruppenverwaltung</Button>
+        <Button variant="default" onClick={() => router.push("/admin/mitglieder")}>👤 Mitgliederverwaltung</Button>
+      </div>
 
-    </div>
-  );
+    <EntryList
+        entries={entries}
+        saetze={saetze}
+        sortAscending={sortAscending}
+        setSortAscending={setSortAscending}
+        setEditEntry={setEditEntry}
+        handleDelete={handleDelete}
+        showAbgerechnete={showAbgerechnete}
+        abgerechneteKeys={abgerechneteKeys}
+        ferienDaten={ferienDaten}
+        standardzeiten={standardzeiten}
+      />
+
+      </div>
+    );
 }
+
 
 
