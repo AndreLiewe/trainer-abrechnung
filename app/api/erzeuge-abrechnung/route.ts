@@ -138,7 +138,7 @@ const pdfBuffer = await generateTrainerPDF({
       status: "erstellt",
       pdf_url: publicUrl,
       summe,
-      erstell_am: new Date().toISOString(),
+      erstellt_am: new Date().toISOString(),
     }]);
 
     if (insertError) {
