@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Gruppe, Mitglied } from "@/lib/groupManagement";
 import {
-  moveMitgliedToGruppe,
-  createMitglied,
-  deleteMitglied,
+     Gruppe,
+     Mitglied,
+    moveMitgliedToGruppe,
+    removeMitgliedFromGruppe,
+     createMitglied,
+    deleteMitglied,
 } from "@/lib/groupManagement";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +23,7 @@ import RequireAuth from "@/components/RequireAuth";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 interface MitgliedRow extends Mitglied {
-  gruppen_id: string | null;
+  gruppen_ids: string[];
 }
 
 type MitgliedWithGroup = Mitglied & {
@@ -36,7 +38,7 @@ export default function AdminMitgliederPage() {
     vorname: "",
     nachname: "",
     geburtsdatum: "",
-    gruppen_id: "",
+    gruppen_ids: [] as string[],
   });
   const confirm = useConfirm();
 
@@ -66,7 +68,7 @@ export default function AdminMitgliederPage() {
       const list = ((data as MitgliedWithGroup[]) || []).map(
         ({ mitglied_gruppen, ...rest }) => ({
           ...rest,
-          gruppen_id: mitglied_gruppen?.[0]?.gruppen_id ?? null,
+          gruppen_ids: mitglied_gruppen?.map((g) => g.gruppen_id) ?? [],
         })
       );
       setMitglieder(list);
@@ -77,16 +79,23 @@ export default function AdminMitgliederPage() {
   }, [isAdmin]);
 
   const handleCreate = async () => {
-    if (!formData.vorname || !formData.nachname || !formData.geburtsdatum || !formData.gruppen_id)
+    if (
+      !formData.vorname ||
+      !formData.nachname ||
+      !formData.geburtsdatum ||
+      formData.gruppen_ids.length === 0
+    )
       return;
     const neu = await createMitglied({
       vorname: formData.vorname,
       nachname: formData.nachname,
       geburtsdatum: formData.geburtsdatum,
     });
-    await moveMitgliedToGruppe(neu.id, formData.gruppen_id);
-    setMitglieder([...mitglieder, { ...neu, gruppen_id: formData.gruppen_id }]);
-    setFormData({ vorname: "", nachname: "", geburtsdatum: "", gruppen_id: "" });
+    await Promise.all(
+      formData.gruppen_ids.map((gid) => moveMitgliedToGruppe(neu.id, gid))
+    );
+    setMitglieder([...mitglieder, { ...neu, gruppen_ids: formData.gruppen_ids }]);
+    setFormData({ vorname: "", nachname: "", geburtsdatum: "", gruppen_ids: [] });
   };
 
   const handleDelete = async (id: string) => {
@@ -96,11 +105,28 @@ export default function AdminMitgliederPage() {
     setMitglieder((prev) => prev.filter((m) => m.id !== id));
   };
 
-  const handleMove = async (id: string, gruppe: string) => {
-    await moveMitgliedToGruppe(id, gruppe);
-    setMitglieder((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, gruppen_id: gruppe } : m))
-    );
+   const handleToggleGroup = async (
+    id: string,
+    gruppe: string,
+    checked: boolean
+  ) => {
+    if (checked) {
+      await moveMitgliedToGruppe(id, gruppe);
+      setMitglieder((prev) =>
+        prev.map((m) =>
+          m.id === id ? { ...m, gruppen_ids: [...m.gruppen_ids, gruppe] } : m
+        )
+      );
+    } else {
+      await removeMitgliedFromGruppe(id, gruppe);
+      setMitglieder((prev) =>
+        prev.map((m) =>
+          m.id === id
+            ? { ...m, gruppen_ids: m.gruppen_ids.filter((g) => g !== gruppe) }
+            : m
+        )
+      );
+    }
   };
 
   return (
@@ -131,21 +157,25 @@ export default function AdminMitgliederPage() {
                 setFormData({ ...formData, geburtsdatum: e.target.value })
               }
             />
-            <Select
-              value={formData.gruppen_id}
-              onValueChange={(val) => setFormData({ ...formData, gruppen_id: val })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Gruppe wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {gruppen.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    {g.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              {gruppen.map((g) => (
+                <label key={g.id} className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.gruppen_ids.includes(g.id)}
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        gruppen_ids: e.target.checked
+                          ? [...prev.gruppen_ids, g.id]
+                          : prev.gruppen_ids.filter((id) => id !== g.id),
+                      }));
+                    }}
+                  />
+                  <span>{g.name}</span>
+                </label>
+              ))}
+            </div>
             <Button onClick={handleCreate}>Anlegen</Button>
           </div>
 
@@ -168,21 +198,20 @@ export default function AdminMitgliederPage() {
                     </td>
                     <td className="p-2">{m.geburtsdatum}</td>
                     <td className="p-2">
-                      <Select
-                        value={m.gruppen_id || ""}
-                        onValueChange={(val) => handleMove(m.id, val)}
-                      >
-                        <SelectTrigger size="sm">
-                          <SelectValue placeholder="-" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {gruppen.map((g) => (
-                            <SelectItem key={g.id} value={g.id}>
-                              {g.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex flex-wrap gap-2">
+                        {gruppen.map((g) => (
+                          <label key={g.id} className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={m.gruppen_ids.includes(g.id)}
+                              onChange={(e) =>
+                                handleToggleGroup(m.id, g.id, e.target.checked)
+                              }
+                            />
+                            <span>{g.name}</span>
+                          </label>
+                        ))}
+                      </div>
                     </td>
                     <td className="p-2">
                       <Button

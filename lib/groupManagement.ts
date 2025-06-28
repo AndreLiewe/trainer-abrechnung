@@ -25,6 +25,8 @@ export type Mitglied = {
   erstellt_am: string;
 };
 
+export type MitgliedMitGruppen = Mitglied & { gruppen_ids: string[] };
+
 import { supabase } from "./supabaseClient";
 
 export async function fetchTrainerGroups(trainerEmail: string) {
@@ -36,16 +38,20 @@ export async function fetchTrainerGroups(trainerEmail: string) {
   return (data ?? []).map((g) => g.gruppen as unknown as Gruppe);
 }
 
-export async function fetchGroupMembers(gruppenId: string) {
+export async function fetchGroupMembers(gruppenId: string): Promise<MitgliedMitGruppen[]> {
   const { data, error } = await supabase
     .from("mitglied_gruppen")
      .select(
-      '"wechsel_geprüft","bereit_für_wechsel","wechsel_anmerkung","wechsel_erforderlich",mitglieder(*)'
+      '"wechsel_geprüft","bereit_für_wechsel","wechsel_anmerkung","wechsel_erforderlich",mitglieder(*, mitglied_gruppen(gruppen_id))'
     )
     .eq("gruppen_id", gruppenId);
   if (error) throw error;
   return (data ?? []).map((m) => ({
     ...(m.mitglieder as unknown as Mitglied),
+    gruppen_ids:
+      ((m.mitglieder as any).mitglied_gruppen as { gruppen_id: string }[] | null)?.map(
+        (mg) => mg.gruppen_id
+      ) ?? [],
     wechsel_geprüft: m.wechsel_geprüft as boolean | null,
     bereit_für_wechsel: m.bereit_für_wechsel as boolean | null,
     wechsel_anmerkung: m.wechsel_anmerkung as string | null,
@@ -249,10 +255,24 @@ export async function moveMitgliedToGruppe(
   mitgliedId: string,
   gruppenId: string
 ) {
-  await supabase.from("mitglied_gruppen").delete().eq("mitglied_id", mitgliedId);
+  
   const { error } = await supabase
     .from("mitglied_gruppen")
-    .insert({ mitglied_id: mitgliedId, gruppen_id: gruppenId });
+    .upsert({ mitglied_id: mitgliedId, gruppen_id: gruppenId }, {
+      onConflict: "mitglied_id,gruppen_id",
+    });
+  if (error) throw error;
+}
+
+export async function removeMitgliedFromGruppe(
+  mitgliedId: string,
+  gruppenId: string
+) {
+  const { error } = await supabase
+    .from("mitglied_gruppen")
+    .delete()
+    .eq("mitglied_id", mitgliedId)
+    .eq("gruppen_id", gruppenId);
   if (error) throw error;
 }
 
