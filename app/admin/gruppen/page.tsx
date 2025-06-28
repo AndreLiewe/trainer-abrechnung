@@ -13,6 +13,7 @@ import berechneAlter from "@/lib/utils/berechneAlter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import RequireAuth from "@/components/RequireAuth";
 
@@ -28,6 +29,7 @@ const [isAdmin, setIsAdmin] = useState(false);
     altersgrenze_min: "",
     altersgrenze_max: "",
   });
+  const [formOpen, setFormOpen] = useState(false);
   const confirm = useConfirm();
 
   useEffect(() => {
@@ -100,6 +102,7 @@ const [isAdmin, setIsAdmin] = useState(false);
    const handleNew = () => {
     setSelectedGruppe(null);
     setFormData({ name: "", beschreibung: "", altersgrenze_min: "", altersgrenze_max: "" });
+    setFormOpen(true);
   };
 
   const handleSave = async () => {
@@ -141,7 +144,10 @@ const [isAdmin, setIsAdmin] = useState(false);
             <Button
               key={g.id}
               variant={selectedGruppe?.id === g.id ? "default" : "outline"}
-              onClick={() => setSelectedGruppe(g)}
+              onClick={() => {
+                setSelectedGruppe(g);
+                setFormOpen(false);
+              }}
             >
               {g.name}
             </Button>
@@ -150,50 +156,72 @@ const [isAdmin, setIsAdmin] = useState(false);
             + Neue Gruppe
           </Button>
         </div>
-        <div className="border rounded p-4 space-y-2">
-          <h2 className="text-lg font-semibold">
-            {selectedGruppe ? "Gruppe bearbeiten" : "Neue Gruppe"}
-          </h2>
-          <Input
-            placeholder="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-          <Textarea
-            placeholder="Beschreibung"
-            value={formData.beschreibung}
-            onChange={(e) =>
-              setFormData({ ...formData, beschreibung: e.target.value })
-            }
-          />
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              placeholder="Mindestalter"
-              value={formData.altersgrenze_min}
-              onChange={(e) =>
-                setFormData({ ...formData, altersgrenze_min: e.target.value })
-              }
-            />
-            <Input
-              type="number"
-              placeholder="Höchstalter"
-              value={formData.altersgrenze_max}
-              onChange={(e) =>
-                setFormData({ ...formData, altersgrenze_max: e.target.value })
-              }
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            {selectedGruppe && (
-              <Button variant="destructive" onClick={handleDelete}>
-                Löschen
-              </Button>
+        <div className="border rounded">
+          <button
+            className="flex w-full items-center justify-between p-4"
+            onClick={() => setFormOpen((o) => !o)}
+          >
+            <h2 className="text-lg font-semibold">
+              {selectedGruppe ? "Gruppe bearbeiten" : "Neue Gruppe"}
+            </h2>
+            {formOpen ? (
+              <ChevronUpIcon className="size-4" />
+            ) : (
+              <ChevronDownIcon className="size-4" />
             )}
-            <Button onClick={handleSave}>
-              {selectedGruppe ? "Speichern" : "Anlegen"}
-            </Button>
-          </div>
+          </button>
+          {formOpen && (
+            <div className="p-4 border-t space-y-2">
+              <Input
+                placeholder="Name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+              <Textarea
+                placeholder="Beschreibung"
+                value={formData.beschreibung}
+                onChange={(e) =>
+                  setFormData({ ...formData, beschreibung: e.target.value })
+                }
+              />
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Mindestalter"
+                  value={formData.altersgrenze_min}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      altersgrenze_min: e.target.value,
+                    })
+                  }
+                />
+                <Input
+                  type="number"
+                  placeholder="Höchstalter"
+                  value={formData.altersgrenze_max}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      altersgrenze_max: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                {selectedGruppe && (
+                  <Button variant="destructive" onClick={handleDelete}>
+                    Löschen
+                  </Button>
+                )}
+                <Button onClick={handleSave}>
+                  {selectedGruppe ? "Speichern" : "Anlegen"}
+                </Button>
+              </div>
+            </div>
+          )}
 
         </div>
         {selectedGruppe && (
