@@ -145,4 +145,50 @@ export async function setWechselErforderlich(
     .eq("mitglied_id", mitgliedId)
     .eq("gruppen_id", gruppenId);
   if (error) throw error;
+  }
+
+export async function updateMitgliedGruppe(
+  mitgliedId: string,
+  gruppenId: string,
+  updates: {
+    wechsel_geprüft?: boolean | null;
+    bereit_für_wechsel?: boolean | null;
+    wechsel_anmerkung?: string | null;
+  },
+  editorEmail: string
+) {
+  const { data: oldRecord } = await supabase
+    .from("mitglied_gruppen")
+    .select("*")
+    .eq("mitglied_id", mitgliedId)
+    .eq("gruppen_id", gruppenId)
+    .single();
+
+  const { data, error } = await supabase
+    .from("mitglied_gruppen")
+    .update(updates)
+    .eq("mitglied_id", mitgliedId)
+    .eq("gruppen_id", gruppenId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const newRecord = data as typeof updates & { [key: string]: any };
+  if (oldRecord) {
+    for (const key of Object.keys(updates)) {
+      const oldVal = oldRecord[key] as unknown as string | null;
+      const newVal = newRecord[key] as unknown as string | null;
+      if (oldVal !== newVal) {
+        await logChange(
+          "mitglied_gruppen",
+          `${mitgliedId}/${gruppenId}`,
+          key,
+          oldVal,
+          newVal,
+          editorEmail
+        );
+      }
+    }
+  }
+  return newRecord;
 }
