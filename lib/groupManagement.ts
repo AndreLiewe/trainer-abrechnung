@@ -191,4 +191,45 @@ export async function updateMitgliedGruppe(
     }
   }
   return newRecord;
+  }
+
+export async function createMitglied(
+  data: Pick<Mitglied, "vorname" | "nachname" | "geburtsdatum"> &
+    Partial<Omit<Mitglied, "id" | "erstellt_am">>
+) {
+  const { data: rec, error } = await supabase
+    .from("mitglieder")
+    .insert({
+      vorname: data.vorname,
+      nachname: data.nachname,
+      geburtsdatum: data.geburtsdatum,
+      geschlecht: data.geschlecht ?? null,
+      notfalltelefon: data.notfalltelefon ?? null,
+      mitgliedsstatus: data.mitgliedsstatus ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return rec as Mitglied;
 }
+
+export async function deleteMitglied(mitgliedId: string) {
+  await supabase.from("mitglied_gruppen").delete().eq("mitglied_id", mitgliedId);
+  const { error } = await supabase
+    .from("mitglieder")
+    .delete()
+    .eq("id", mitgliedId);
+  if (error) throw error;
+}
+
+export async function moveMitgliedToGruppe(
+  mitgliedId: string,
+  gruppenId: string
+) {
+  await supabase.from("mitglied_gruppen").delete().eq("mitglied_id", mitgliedId);
+  const { error } = await supabase
+    .from("mitglied_gruppen")
+    .insert({ mitglied_id: mitgliedId, gruppen_id: gruppenId });
+  if (error) throw error;
+}
+
