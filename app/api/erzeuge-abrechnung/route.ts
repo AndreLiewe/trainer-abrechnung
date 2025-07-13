@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     console.log("[DEBUG] Eingangsdaten:", trainername, monat, jahr);
 
     const von = `${jahr}-${String(monat).padStart(2, "0")}-01`;
-    const bisDate = new Date(Number(jahr), Number(monat), 1);
+   const bisDate = new Date(Number(jahr), Number(monat) - 1, 1);
     bisDate.setMonth(bisDate.getMonth() + 1);
     const bis = bisDate.toISOString().split("T")[0];
 
